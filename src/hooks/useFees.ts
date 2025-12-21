@@ -98,7 +98,7 @@ export const useCreateFeeStructure = () => {
     mutationFn: async (fee: CreateFeeStructureData) => {
       const { data, error } = await supabase
         .from('fee_structures')
-        .insert([fee])
+        .insert([fee as any])
         .select()
         .single();
       

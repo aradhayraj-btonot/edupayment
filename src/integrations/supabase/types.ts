@@ -408,6 +408,7 @@ export type Database = {
         | "laboratory"
         | "sports"
         | "other"
+        | "annually"
       payment_status: "pending" | "completed" | "failed" | "refunded"
     }
     CompositeTypes: {
@@ -545,6 +546,7 @@ export const Constants = {
         "laboratory",
         "sports",
         "other",
+        "annually",
       ],
       payment_status: ["pending", "completed", "failed", "refunded"],
     },
