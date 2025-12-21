@@ -28,6 +28,7 @@ import { useParentStudents } from "@/hooks/useStudents";
 import { useParentPayments, useCreatePayment } from "@/hooks/usePayments";
 import { useStudentFees } from "@/hooks/useFees";
 import { useSchools } from "@/hooks/useSchools";
+import { useParentNotifications, useNotificationReads, useMarkNotificationRead } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { QrCode, Copy, ExternalLink } from "lucide-react";
 import {
@@ -52,7 +53,14 @@ const ParentDashboard = () => {
   const { data: schools = [] } = useSchools();
   const selectedStudent = students[0];
   const { data: studentFees = [] } = useStudentFees(selectedStudent?.id);
+  const { data: notifications = [], isLoading: notificationsLoading } = useParentNotifications();
+  const { data: notificationReads = [] } = useNotificationReads();
+  const markAsRead = useMarkNotificationRead();
   const createPayment = useCreatePayment();
+
+  // Calculate unread count
+  const readNotificationIds = new Set(notificationReads.map(r => r.notification_id));
+  const unreadCount = notifications.filter(n => !readNotificationIds.has(n.id)).length;
 
   // Get school details for payment info
   const studentSchool = schools.find(s => s.id === selectedStudent?.school_id);
@@ -260,8 +268,18 @@ const ParentDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="relative">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="relative"
+                onClick={() => setActiveTab("notifications")}
+              >
                 <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
               </Button>
               <a href="tel:+911234567890">
                 <Button variant="outline" className="gap-2">
@@ -700,7 +718,75 @@ const ParentDashboard = () => {
             </div>
           )}
 
-          {(activeTab === "notifications" || activeTab === "settings") && (
+          {activeTab === "notifications" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-display flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  School Notifications
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive">{unreadCount} new</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notificationsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>No notifications yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {notifications.map((notif) => {
+                      const isRead = readNotificationIds.has(notif.id);
+                      return (
+                        <div
+                          key={notif.id}
+                          className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                            isRead 
+                              ? "bg-secondary/30 border-border" 
+                              : "bg-primary/5 border-primary/20"
+                          }`}
+                          onClick={() => !isRead && markAsRead.mutate(notif.id)}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                {!isRead && (
+                                  <span className="w-2 h-2 bg-primary rounded-full" />
+                                )}
+                                <p className={`font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>
+                                  {notif.title}
+                                </p>
+                              </div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {notif.message}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {format(new Date(notif.created_at), 'MMM dd, yyyy • HH:mm')}
+                              </p>
+                            </div>
+                            <Badge variant={
+                              notif.type === "urgent" ? "destructive" :
+                              notif.type === "warning" ? "secondary" : "default"
+                            }>
+                              {notif.type}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "settings" && (
             <Card>
               <CardContent className="py-12">
                 <div className="text-center text-muted-foreground">

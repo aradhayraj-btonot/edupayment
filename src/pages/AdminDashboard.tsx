@@ -48,7 +48,9 @@ import { useStudents, useCreateStudent } from "@/hooks/useStudents";
 import { usePayments, usePaymentStats } from "@/hooks/usePayments";
 import { useSchools, useCreateSchool } from "@/hooks/useSchools";
 import { useFeeStructures, useCreateFeeStructure } from "@/hooks/useFees";
+import { useSchoolNotifications, useSendNotification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -59,6 +61,13 @@ const AdminDashboard = () => {
   const [addSchoolOpen, setAddSchoolOpen] = useState(false);
   const [addFeeOpen, setAddFeeOpen] = useState(false);
 
+  // Notification form state
+  const [notificationForm, setNotificationForm] = useState({
+    title: "",
+    message: "",
+    type: "info",
+  });
+
   // Data hooks
   const { data: schools = [], isLoading: schoolsLoading } = useSchools();
   const selectedSchool = schools[0];
@@ -66,11 +75,13 @@ const AdminDashboard = () => {
   const { data: payments = [], isLoading: paymentsLoading } = usePayments();
   const { data: paymentStats } = usePaymentStats();
   const { data: feeStructures = [] } = useFeeStructures(selectedSchool?.id);
+  const { data: notifications = [], isLoading: notificationsLoading } = useSchoolNotifications(selectedSchool?.id);
 
   // Mutations
   const createStudent = useCreateStudent();
   const createSchool = useCreateSchool();
   const createFee = useCreateFeeStructure();
+  const sendNotification = useSendNotification();
 
   // Form states
   const [studentForm, setStudentForm] = useState({
@@ -152,6 +163,20 @@ const AdminDashboard = () => {
     
     setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "" });
     setAddFeeOpen(false);
+  };
+
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSchool) return;
+    
+    await sendNotification.mutateAsync({
+      school_id: selectedSchool.id,
+      title: notificationForm.title,
+      message: notificationForm.message,
+      type: notificationForm.type,
+    });
+    
+    setNotificationForm({ title: "", message: "", type: "info" });
   };
 
   const stats = [
@@ -893,7 +918,123 @@ const AdminDashboard = () => {
             </Card>
           )}
 
-          {(activeTab === "notifications" || activeTab === "settings") && (
+          {activeTab === "notifications" && (
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Send Notification Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    Send Notification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!selectedSchool ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Please add a school first to send notifications.
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSendNotification} className="space-y-4">
+                      <div>
+                        <Label htmlFor="notif-title">Title *</Label>
+                        <Input
+                          id="notif-title"
+                          placeholder="Important announcement"
+                          value={notificationForm.title}
+                          onChange={(e) => setNotificationForm({ ...notificationForm, title: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="notif-message">Message *</Label>
+                        <Textarea
+                          id="notif-message"
+                          placeholder="Write your notification message here..."
+                          rows={5}
+                          value={notificationForm.message}
+                          onChange={(e) => setNotificationForm({ ...notificationForm, message: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="notif-type">Type</Label>
+                        <Select
+                          value={notificationForm.type}
+                          onValueChange={(value) => setNotificationForm({ ...notificationForm, type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="info">Info</SelectItem>
+                            <SelectItem value="warning">Warning</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="bg-secondary/50 rounded-lg p-4">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Note:</strong> This notification will be sent to all {students.length} students' linked parents via email.
+                        </p>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={sendNotification.isPending}>
+                        {sendNotification.isPending ? "Sending..." : "Send Notification"}
+                      </Button>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Notification History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display">
+                    Sent Notifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {notificationsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No notifications sent yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                      {notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className="p-4 rounded-lg bg-secondary/50 border-l-4 border-l-primary"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">{notif.title}</p>
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {notif.message}
+                              </p>
+                            </div>
+                            <Badge variant={
+                              notif.type === "urgent" ? "destructive" :
+                              notif.type === "warning" ? "secondary" : "default"
+                            }>
+                              {notif.type}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {format(new Date(notif.created_at), 'MMM dd, yyyy • HH:mm')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
             <Card>
               <CardContent className="py-12">
                 <div className="text-center text-muted-foreground">
