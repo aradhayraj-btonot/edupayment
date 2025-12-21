@@ -160,6 +160,16 @@ const ParentDashboard = () => {
                     {selectedStudent?.roll_number && <p>Roll No: {selectedStudent.roll_number}</p>}
                     {selectedStudent?.section && <p>Section: {selectedStudent.section}</p>}
                   </div>
+                  {/* Linked School Info */}
+                  {studentSchool && (
+                    <div className="mt-3 pt-3 border-t border-primary/10">
+                      <p className="text-xs font-medium text-primary mb-1">School</p>
+                      <p className="text-sm font-semibold text-foreground">{studentSchool.name}</p>
+                      {studentSchool.phone && (
+                        <p className="text-xs text-muted-foreground">{studentSchool.phone}</p>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
