@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,96 +23,48 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { useParentStudents } from "@/hooks/useStudents";
+import { useParentPayments } from "@/hooks/usePayments";
+import { useStudentFees } from "@/hooks/useFees";
+import { format } from "date-fns";
 
 const ParentDashboard = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
-  const studentInfo = {
-    name: "Arjun Sharma",
-    class: "10-A",
-    rollNo: "2024-10A-042",
-    admissionNo: "ADM-2024-1042",
+  // Data hooks
+  const { data: students = [], isLoading: studentsLoading } = useParentStudents();
+  const { data: payments = [], isLoading: paymentsLoading } = useParentPayments();
+  const selectedStudent = students[0];
+  const { data: studentFees = [] } = useStudentFees(selectedStudent?.id);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
   };
+
+  // Calculate totals from real data
+  const completedPayments = payments.filter(p => p.status === 'completed');
+  const pendingPayments = payments.filter(p => p.status === 'pending');
+  const totalPaid = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPending = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
   const feesSummary = {
-    total: "₹1,25,000",
-    paid: "₹75,000",
-    pending: "₹50,000",
-    dueDate: "15 Jan 2025",
+    total: `₹${(totalPaid + totalPending).toLocaleString('en-IN')}`,
+    paid: `₹${totalPaid.toLocaleString('en-IN')}`,
+    pending: `₹${totalPending.toLocaleString('en-IN')}`,
+    dueDate: studentFees.length > 0 ? format(new Date(studentFees[0].due_date), 'dd MMM yyyy') : 'N/A',
   };
 
-  const pendingFees = [
-    {
-      id: 1,
-      name: "Tuition Fee (Q3)",
-      amount: "₹25,000",
-      dueDate: "15 Jan 2025",
-      status: "due",
-    },
-    {
-      id: 2,
-      name: "Transport Fee (Q3)",
-      amount: "₹8,000",
-      dueDate: "15 Jan 2025",
-      status: "due",
-    },
-    {
-      id: 3,
-      name: "Lab Fee",
-      amount: "₹5,000",
-      dueDate: "20 Jan 2025",
-      status: "upcoming",
-    },
-    {
-      id: 4,
-      name: "Annual Activity Fee",
-      amount: "₹12,000",
-      dueDate: "31 Jan 2025",
-      status: "upcoming",
-    },
-  ];
-
-  const paymentHistory = [
-    {
-      id: 1,
-      description: "Tuition Fee (Q2)",
-      amount: "₹25,000",
-      date: "15 Oct 2024",
-      method: "UPI",
-      receiptNo: "RCP-2024-1542",
-    },
-    {
-      id: 2,
-      description: "Transport Fee (Q2)",
-      amount: "₹8,000",
-      date: "15 Oct 2024",
-      method: "Card",
-      receiptNo: "RCP-2024-1543",
-    },
-    {
-      id: 3,
-      description: "Tuition Fee (Q1)",
-      amount: "₹25,000",
-      date: "15 Jul 2024",
-      method: "Net Banking",
-      receiptNo: "RCP-2024-0892",
-    },
-    {
-      id: 4,
-      description: "Admission Fee",
-      amount: "₹17,000",
-      date: "01 Apr 2024",
-      method: "UPI",
-      receiptNo: "RCP-2024-0245",
-    },
-  ];
-
   const navItems = [
-    { icon: Home, label: "Dashboard", active: true },
-    { icon: CreditCard, label: "Pay Fees" },
-    { icon: History, label: "Payment History" },
-    { icon: Bell, label: "Notifications" },
-    { icon: Settings, label: "Settings" },
+    { icon: Home, label: "Dashboard", key: "dashboard" },
+    { icon: CreditCard, label: "Pay Fees", key: "pay" },
+    { icon: History, label: "Payment History", key: "history" },
+    { icon: Bell, label: "Notifications", key: "notifications" },
+    { icon: Settings, label: "Settings", key: "settings" },
   ];
 
   return (
@@ -139,23 +91,35 @@ const ParentDashboard = () => {
           {/* Student Info Card */}
           <div className="p-4">
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="w-6 h-6 text-primary" />
+              {studentsLoading ? (
+                <div className="flex justify-center py-4">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {studentInfo.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Class {studentInfo.class}
-                  </p>
+              ) : students.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  No students linked to your account yet.
                 </div>
-              </div>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>Roll No: {studentInfo.rollNo}</p>
-                <p>Adm No: {studentInfo.admissionNo}</p>
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {selectedStudent?.first_name} {selectedStudent?.last_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Class {selectedStudent?.class}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    {selectedStudent?.roll_number && <p>Roll No: {selectedStudent.roll_number}</p>}
+                    {selectedStudent?.section && <p>Section: {selectedStudent.section}</p>}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -163,9 +127,10 @@ const ParentDashboard = () => {
           <nav className="flex-1 p-4 space-y-1">
             {navItems.map((item) => (
               <button
-                key={item.label}
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                  item.active
+                  activeTab === item.key
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
@@ -180,23 +145,23 @@ const ParentDashboard = () => {
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                <span className="text-accent font-semibold">PS</span>
+                <span className="text-accent font-semibold">
+                  {user?.email?.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  Pradeep Sharma
+                  Parent
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  parent@email.com
+                  {user?.email}
                 </p>
               </div>
             </div>
-            <Link to="/login">
-              <Button variant="ghost" className="w-full justify-start gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-            </Link>
+            <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </aside>
@@ -235,16 +200,16 @@ const ParentDashboard = () => {
                   Parent Dashboard
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Manage fees and payments for {studentInfo.name}
+                  {selectedStudent 
+                    ? `Manage fees and payments for ${selectedStudent.first_name} ${selectedStudent.last_name}`
+                    : "View your fee details and payment history"
+                  }
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="icon" className="relative">
                 <Bell className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-coral text-coral-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                  2
-                </span>
               </Button>
               <a href="tel:+911234567890">
                 <Button variant="outline" className="gap-2">
@@ -258,222 +223,309 @@ const ParentDashboard = () => {
 
         {/* Dashboard Content */}
         <div className="p-6 space-y-6">
-          {/* Fee Summary */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <Card className="border-l-4 border-l-primary">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Total Annual Fee
-                  </p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {feesSummary.total}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="border-l-4 border-l-success">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Amount Paid
-                  </p>
-                  <p className="text-2xl font-bold text-success">
-                    {feesSummary.paid}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card className="border-l-4 border-l-coral">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Pending Amount
-                  </p>
-                  <p className="text-2xl font-bold text-coral">
-                    {feesSummary.pending}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Card className="border-l-4 border-l-warning">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Next Due Date
-                  </p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {feesSummary.dueDate}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Pending Fees */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display">
-                  Pending Fees
-                </CardTitle>
-                <Badge variant="secondary" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />4 items
-                </Badge>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {pendingFees.map((fee) => (
-                  <div
-                    key={fee.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{fee.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Calendar className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Due: {fee.dueDate}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">
-                        {fee.amount}
+          {activeTab === "dashboard" && (
+            <>
+              {/* Fee Summary */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card className="border-l-4 border-l-primary">
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Total Annual Fee
                       </p>
-                      <Badge
-                        variant={
-                          fee.status === "due" ? "destructive" : "secondary"
-                        }
-                        className="mt-1"
-                      >
-                        {fee.status === "due" ? (
-                          <>
-                            <Clock className="w-3 h-3 mr-1" /> Due Now
-                          </>
-                        ) : (
-                          "Upcoming"
-                        )}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-                <Button variant="success" className="w-full mt-4" size="lg">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Pay All Pending (₹50,000)
-                </Button>
-              </CardContent>
-            </Card>
+                      <p className="text-2xl font-bold text-foreground">
+                        {feesSummary.total}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <Card className="border-l-4 border-l-success">
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Amount Paid
+                      </p>
+                      <p className="text-2xl font-bold text-success">
+                        {feesSummary.paid}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Card className="border-l-4 border-l-coral">
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Pending Amount
+                      </p>
+                      <p className="text-2xl font-bold text-coral">
+                        {feesSummary.pending}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Card className="border-l-4 border-l-warning">
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Next Due Date
+                      </p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {feesSummary.dueDate}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
 
-            {/* Payment History */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display">
-                  Payment History
-                </CardTitle>
-                <Button variant="ghost" size="sm">
-                  View All
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {paymentHistory.map((payment) => (
-                  <div
-                    key={payment.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-success" />
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Pending Fees */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg font-display">
+                      Pending Fees
+                    </CardTitle>
+                    <Badge variant="secondary" className="gap-1">
+                      <AlertTriangle className="w-3 h-3" />{studentFees.length} items
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {studentFees.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No pending fees at the moment.
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {payment.description}
+                    ) : (
+                      studentFees.map((fee) => (
+                        <div
+                          key={fee.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                        >
+                          <div>
+                            <p className="font-medium text-foreground">{fee.fee_structures?.name || 'Fee'}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Calendar className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                Due: {format(new Date(fee.due_date), 'dd MMM yyyy')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground">
+                              ₹{(Number(fee.amount) - Number(fee.discount)).toLocaleString('en-IN')}
+                            </p>
+                            <Badge
+                              variant={new Date(fee.due_date) < new Date() ? "destructive" : "secondary"}
+                              className="mt-1"
+                            >
+                              {new Date(fee.due_date) < new Date() ? (
+                                <>
+                                  <Clock className="w-3 h-3 mr-1" /> Overdue
+                                </>
+                              ) : (
+                                "Upcoming"
+                              )}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    {totalPending > 0 && (
+                      <Button variant="success" className="w-full mt-4" size="lg">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Pay All Pending ({feesSummary.pending})
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Payment History */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg font-display">
+                      Payment History
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("history")}>
+                      View All
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {paymentsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : completedPayments.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No payment history yet.
+                      </div>
+                    ) : (
+                      completedPayments.slice(0, 4).map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
+                              <CheckCircle className="w-5 h-5 text-success" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                Payment
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {payment.payment_date ? format(new Date(payment.payment_date), 'dd MMM yyyy') : 'N/A'} • {payment.payment_method}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground">
+                              ₹{Number(payment.amount).toLocaleString('en-IN')}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs gap-1"
+                            >
+                              <Download className="w-3 h-3" />
+                              Receipt
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payment Methods */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display">
+                    Quick Pay - Multiple Payment Options
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      {
+                        name: "UPI",
+                        icon: "📱",
+                        desc: "GPay, PhonePe, Paytm",
+                      },
+                      {
+                        name: "Credit/Debit Card",
+                        icon: "💳",
+                        desc: "Visa, Mastercard, RuPay",
+                      },
+                      {
+                        name: "Net Banking",
+                        icon: "🏦",
+                        desc: "All major banks",
+                      },
+                      {
+                        name: "EMI Options",
+                        icon: "📅",
+                        desc: "3, 6, 12 month plans",
+                      },
+                    ].map((method) => (
+                      <button
+                        key={method.name}
+                        className="p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                      >
+                        <span className="text-3xl mb-2 block">{method.icon}</span>
+                        <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                          {method.name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {payment.date} • {payment.method}
+                          {method.desc}
                         </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">
-                        {payment.amount}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs gap-1"
-                      >
-                        <Download className="w-3 h-3" />
-                        Receipt
-                      </Button>
-                    </div>
+                      </button>
+                    ))}
                   </div>
-                ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "history" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-display">All Payments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {paymentsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : payments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No payment history yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            payment.status === 'completed' ? 'bg-success/10' : 'bg-warning/10'
+                          }`}>
+                            {payment.status === 'completed' ? (
+                              <CheckCircle className="w-5 h-5 text-success" />
+                            ) : (
+                              <Clock className="w-5 h-5 text-warning" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">
+                              Payment via {payment.payment_method}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {payment.payment_date ? format(new Date(payment.payment_date), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-foreground">
+                            ₹{Number(payment.amount).toLocaleString('en-IN')}
+                          </p>
+                          <Badge variant={payment.status === 'completed' ? 'default' : 'secondary'}>
+                            {payment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </div>
+          )}
 
-          {/* Payment Methods */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-display">
-                Quick Pay - Multiple Payment Options
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  {
-                    name: "UPI",
-                    icon: "📱",
-                    desc: "GPay, PhonePe, Paytm",
-                  },
-                  {
-                    name: "Credit/Debit Card",
-                    icon: "💳",
-                    desc: "Visa, Mastercard, RuPay",
-                  },
-                  {
-                    name: "Net Banking",
-                    icon: "🏦",
-                    desc: "All major banks",
-                  },
-                  {
-                    name: "EMI Options",
-                    icon: "📅",
-                    desc: "3, 6, 12 month plans",
-                  },
-                ].map((method) => (
-                  <button
-                    key={method.name}
-                    className="p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
-                  >
-                    <span className="text-3xl mb-2 block">{method.icon}</span>
-                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {method.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {method.desc}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {(activeTab === "pay" || activeTab === "notifications" || activeTab === "settings") && (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  <p className="text-lg font-medium mb-2">Coming Soon</p>
+                  <p>This feature is under development.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>

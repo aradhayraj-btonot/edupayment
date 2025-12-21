@@ -1,26 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Mail, Lock, User, Building } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Building, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { signIn, signUp, user, role, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+  });
 
-  const handleLogin = (role: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
+  useEffect(() => {
+    if (!loading && user && role) {
       if (role === "admin") {
         navigate("/admin");
-      } else {
+      } else if (role === "parent") {
         navigate("/parent");
       }
+    }
+  }, [user, role, loading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent, userRole: "admin" | "parent") => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (isSignUp) {
+        if (!formData.fullName.trim()) {
+          toast.error("Please enter your full name");
+          setIsLoading(false);
+          return;
+        }
+        const { error } = await signUp(formData.email, formData.password, formData.fullName, userRole);
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("This email is already registered. Please sign in instead.");
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.success("Account created successfully! You are now logged in.");
+        }
+      } else {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          if (error.message.includes("Invalid login")) {
+            toast.error("Invalid email or password. Please try again.");
+          } else {
+            toast.error(error.message);
+          }
+        }
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -48,11 +93,13 @@ const Login = () => {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-4xl font-display font-bold text-primary-foreground mb-4">
-              Welcome back!
+              {isSignUp ? "Join EduPay!" : "Welcome back!"}
             </h1>
             <p className="text-primary-foreground/80 text-lg max-w-md">
-              Access your dashboard to manage fees, track payments, and stay on
-              top of your school's finances.
+              {isSignUp 
+                ? "Create your account to start managing school fees efficiently."
+                : "Access your dashboard to manage fees, track payments, and stay on top of your school's finances."
+              }
             </p>
           </motion.div>
 
@@ -98,7 +145,7 @@ const Login = () => {
 
           <div className="text-center mb-8">
             <h2 className="text-2xl font-display font-bold text-foreground mb-2">
-              Sign in to your account
+              {isSignUp ? "Create your account" : "Sign in to your account"}
             </h2>
             <p className="text-muted-foreground">
               Choose your role to continue
@@ -119,12 +166,26 @@ const Login = () => {
 
             <TabsContent value="admin">
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLogin("admin");
-                }}
+                onSubmit={(e) => handleSubmit(e, "admin")}
                 className="space-y-4"
               >
+                {isSignUp && (
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-name">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="admin-name"
+                        type="text"
+                        placeholder="John Doe"
+                        className="pl-10"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="admin-email">Email</Label>
                   <div className="relative">
@@ -134,7 +195,9 @@ const Login = () => {
                       type="email"
                       placeholder="admin@school.edu"
                       className="pl-10"
-                      defaultValue="admin@school.edu"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
@@ -147,7 +210,10 @@ const Login = () => {
                       type="password"
                       placeholder="••••••••"
                       className="pl-10"
-                      defaultValue="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      minLength={6}
                     />
                   </div>
                 </div>
@@ -157,19 +223,33 @@ const Login = () => {
                   size="lg"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in as Admin"}
+                  {isLoading ? "Please wait..." : isSignUp ? "Create Admin Account" : "Sign in as Admin"}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="parent">
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLogin("parent");
-                }}
+                onSubmit={(e) => handleSubmit(e, "parent")}
                 className="space-y-4"
               >
+                {isSignUp && (
+                  <div className="space-y-2">
+                    <Label htmlFor="parent-name">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="parent-name"
+                        type="text"
+                        placeholder="Jane Doe"
+                        className="pl-10"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="parent-email">Email</Label>
                   <div className="relative">
@@ -179,7 +259,9 @@ const Login = () => {
                       type="email"
                       placeholder="parent@email.com"
                       className="pl-10"
-                      defaultValue="parent@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
@@ -192,7 +274,10 @@ const Login = () => {
                       type="password"
                       placeholder="••••••••"
                       className="pl-10"
-                      defaultValue="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      minLength={6}
                     />
                   </div>
                 </div>
@@ -202,18 +287,22 @@ const Login = () => {
                   size="lg"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in as Parent"}
+                  {isLoading ? "Please wait..." : isSignUp ? "Create Parent Account" : "Sign in as Parent"}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <Link to="/" className="text-primary hover:underline font-medium">
-              Contact us
-            </Link>
-          </p>
+          <div className="mt-6 text-center">
+            <Button
+              variant="ghost"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </Button>
+          </div>
         </motion.div>
       </div>
     </div>

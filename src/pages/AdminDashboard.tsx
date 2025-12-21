@@ -1,8 +1,24 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   GraduationCap,
   Home,
@@ -23,16 +39,119 @@ import {
   Download,
   Menu,
   X,
+  Plus,
+  Building,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { useStudents, useCreateStudent } from "@/hooks/useStudents";
+import { usePayments, usePaymentStats } from "@/hooks/usePayments";
+import { useSchools, useCreateSchool } from "@/hooks/useSchools";
+import { useFeeStructures, useCreateFeeStructure } from "@/hooks/useFees";
+import { format } from "date-fns";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const { user, signOut, role } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [addStudentOpen, setAddStudentOpen] = useState(false);
+  const [addSchoolOpen, setAddSchoolOpen] = useState(false);
+  const [addFeeOpen, setAddFeeOpen] = useState(false);
+
+  // Data hooks
+  const { data: schools = [], isLoading: schoolsLoading } = useSchools();
+  const selectedSchool = schools[0];
+  const { data: students = [], isLoading: studentsLoading } = useStudents(selectedSchool?.id);
+  const { data: payments = [], isLoading: paymentsLoading } = usePayments();
+  const { data: paymentStats } = usePaymentStats();
+  const { data: feeStructures = [] } = useFeeStructures(selectedSchool?.id);
+
+  // Mutations
+  const createStudent = useCreateStudent();
+  const createSchool = useCreateSchool();
+  const createFee = useCreateFeeStructure();
+
+  // Form states
+  const [studentForm, setStudentForm] = useState({
+    first_name: "",
+    last_name: "",
+    class: "",
+    section: "",
+    roll_number: "",
+  });
+
+  const [schoolForm, setSchoolForm] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
+
+  const [feeForm, setFeeForm] = useState({
+    name: "",
+    fee_type: "tuition" as const,
+    amount: "",
+    academic_year: "2024-2025",
+    description: "",
+  });
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSchool) return;
+    
+    await createStudent.mutateAsync({
+      school_id: selectedSchool.id,
+      first_name: studentForm.first_name,
+      last_name: studentForm.last_name,
+      class: studentForm.class,
+      section: studentForm.section || null,
+      roll_number: studentForm.roll_number || null,
+    });
+    
+    setStudentForm({ first_name: "", last_name: "", class: "", section: "", roll_number: "" });
+    setAddStudentOpen(false);
+  };
+
+  const handleAddSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createSchool.mutateAsync({
+      name: schoolForm.name,
+      address: schoolForm.address || null,
+      phone: schoolForm.phone || null,
+      email: schoolForm.email || null,
+    });
+    
+    setSchoolForm({ name: "", address: "", phone: "", email: "" });
+    setAddSchoolOpen(false);
+  };
+
+  const handleAddFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSchool) return;
+    
+    await createFee.mutateAsync({
+      school_id: selectedSchool.id,
+      name: feeForm.name,
+      fee_type: feeForm.fee_type,
+      amount: parseFloat(feeForm.amount),
+      academic_year: feeForm.academic_year,
+      description: feeForm.description || null,
+    });
+    
+    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "" });
+    setAddFeeOpen(false);
+  };
 
   const stats = [
     {
       title: "Total Collections",
-      value: "₹24,56,890",
+      value: `₹${(paymentStats?.totalCollected || 0).toLocaleString('en-IN')}`,
       change: "+12.5%",
       trend: "up",
       icon: IndianRupee,
@@ -40,7 +159,7 @@ const AdminDashboard = () => {
     },
     {
       title: "Pending Fees",
-      value: "₹8,45,000",
+      value: `₹${(paymentStats?.pendingAmount || 0).toLocaleString('en-IN')}`,
       change: "-5.2%",
       trend: "down",
       icon: Clock,
@@ -48,15 +167,17 @@ const AdminDashboard = () => {
     },
     {
       title: "Total Students",
-      value: "1,248",
-      change: "+48",
+      value: students.length.toString(),
+      change: `+${students.length}`,
       trend: "up",
       icon: Users,
       color: "bg-info/10 text-info",
     },
     {
       title: "Payment Rate",
-      value: "74.5%",
+      value: paymentStats?.completedCount && paymentStats?.pendingCount
+        ? `${Math.round((paymentStats.completedCount / (paymentStats.completedCount + paymentStats.pendingCount)) * 100)}%`
+        : "0%",
       change: "+2.1%",
       trend: "up",
       icon: TrendingUp,
@@ -64,63 +185,14 @@ const AdminDashboard = () => {
     },
   ];
 
-  const recentPayments = [
-    {
-      id: 1,
-      student: "Rahul Sharma",
-      class: "10-A",
-      amount: "₹15,000",
-      status: "completed",
-      date: "Today, 2:30 PM",
-    },
-    {
-      id: 2,
-      student: "Priya Patel",
-      class: "8-B",
-      amount: "₹12,500",
-      status: "completed",
-      date: "Today, 1:15 PM",
-    },
-    {
-      id: 3,
-      student: "Amit Kumar",
-      class: "12-A",
-      amount: "₹18,000",
-      status: "pending",
-      date: "Today, 11:00 AM",
-    },
-    {
-      id: 4,
-      student: "Sneha Reddy",
-      class: "9-C",
-      amount: "₹14,000",
-      status: "completed",
-      date: "Yesterday",
-    },
-    {
-      id: 5,
-      student: "Vikram Singh",
-      class: "11-B",
-      amount: "₹16,500",
-      status: "failed",
-      date: "Yesterday",
-    },
-  ];
-
-  const feeCategories = [
-    { name: "Tuition Fee", collected: 75, total: "₹18,00,000" },
-    { name: "Transport Fee", collected: 68, total: "₹4,50,000" },
-    { name: "Lab Fee", collected: 82, total: "₹1,20,000" },
-    { name: "Activities", collected: 45, total: "₹85,000" },
-  ];
-
   const navItems = [
-    { icon: Home, label: "Dashboard", active: true },
-    { icon: Users, label: "Students" },
-    { icon: CreditCard, label: "Payments" },
-    { icon: BarChart3, label: "Reports" },
-    { icon: Bell, label: "Notifications" },
-    { icon: Settings, label: "Settings" },
+    { icon: Home, label: "Dashboard", key: "dashboard" },
+    { icon: Building, label: "Schools", key: "schools" },
+    { icon: Users, label: "Students", key: "students" },
+    { icon: CreditCard, label: "Payments", key: "payments" },
+    { icon: BarChart3, label: "Fee Structures", key: "fees" },
+    { icon: Bell, label: "Notifications", key: "notifications" },
+    { icon: Settings, label: "Settings", key: "settings" },
   ];
 
   return (
@@ -148,9 +220,10 @@ const AdminDashboard = () => {
           <nav className="flex-1 p-4 space-y-1">
             {navItems.map((item) => (
               <button
-                key={item.label}
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                  item.active
+                  activeTab === item.key
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
@@ -165,23 +238,23 @@ const AdminDashboard = () => {
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-semibold">SA</span>
+                <span className="text-primary font-semibold">
+                  {user?.email?.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
                   School Admin
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  admin@school.edu
+                  {user?.email}
                 </p>
               </div>
             </div>
-            <Link to="/login">
-              <Button variant="ghost" className="w-full justify-start gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-            </Link>
+            <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </aside>
@@ -216,20 +289,21 @@ const AdminDashboard = () => {
                 )}
               </button>
               <div>
-                <h1 className="text-2xl font-display font-bold text-foreground">
-                  Dashboard
+                <h1 className="text-2xl font-display font-bold text-foreground capitalize">
+                  {activeTab}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Welcome back! Here's your school's financial overview.
+                  {activeTab === "dashboard" && "Welcome back! Here's your school's financial overview."}
+                  {activeTab === "students" && `${students.length} students enrolled`}
+                  {activeTab === "payments" && `${payments.length} total payments`}
+                  {activeTab === "schools" && `${schools.length} schools registered`}
+                  {activeTab === "fees" && `${feeStructures.length} fee structures`}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="icon" className="relative">
                 <Bell className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-coral text-coral-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                  3
-                </span>
               </Button>
               <Button variant="default" className="gap-2">
                 <Download className="w-4 h-4" />
@@ -241,169 +315,544 @@ const AdminDashboard = () => {
 
         {/* Dashboard Content */}
         <div className="p-6 space-y-6">
-          {/* Stats Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {stat.title}
-                        </p>
-                        <p className="text-2xl font-bold text-foreground">
-                          {stat.value}
-                        </p>
-                      </div>
-                      <div
-                        className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
-                      >
-                        <stat.icon className="w-5 h-5" />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 mt-3">
-                      {stat.trend === "up" ? (
-                        <TrendingUp className="w-4 h-4 text-success" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-destructive" />
-                      )}
-                      <span
-                        className={`text-sm font-medium ${
-                          stat.trend === "up"
-                            ? "text-success"
-                            : "text-destructive"
-                        }`}
-                      >
-                        {stat.change}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        vs last month
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Recent Payments */}
-            <Card className="lg:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display">
-                  Recent Payments
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Search className="w-4 h-4" />
-                    Search
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="w-4 h-4" />
-                    Filter
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentPayments.map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">
-                            {payment.student
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+          {activeTab === "dashboard" && (
+            <>
+              {/* Stats Grid */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {stats.map((stat, index) => (
+                  <motion.div
+                    key={stat.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                              {stat.title}
+                            </p>
+                            <p className="text-2xl font-bold text-foreground">
+                              {stat.value}
+                            </p>
+                          </div>
+                          <div
+                            className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                          >
+                            <stat.icon className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 mt-3">
+                          {stat.trend === "up" ? (
+                            <TrendingUp className="w-4 h-4 text-success" />
+                          ) : (
+                            <TrendingDown className="w-4 h-4 text-destructive" />
+                          )}
+                          <span
+                            className={`text-sm font-medium ${
+                              stat.trend === "up"
+                                ? "text-success"
+                                : "text-destructive"
+                            }`}
+                          >
+                            {stat.change}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            vs last month
                           </span>
                         </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Recent Payments */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg font-display">
+                    Recent Payments
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Search className="w-4 h-4" />
+                      Search
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Filter className="w-4 h-4" />
+                      Filter
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {paymentsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : payments.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No payments recorded yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {payments.slice(0, 5).map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary font-semibold text-sm">
+                                {payment.students?.first_name?.charAt(0)}{payment.students?.last_name?.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                {payment.students?.first_name} {payment.students?.last_name}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Class {payment.students?.class} • {payment.payment_date ? format(new Date(payment.payment_date), 'MMM dd, yyyy') : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground">
+                              ₹{Number(payment.amount).toLocaleString('en-IN')}
+                            </p>
+                            <Badge
+                              variant={
+                                payment.status === "completed"
+                                  ? "default"
+                                  : payment.status === "pending"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
+                              className="mt-1"
+                            >
+                              {payment.status === "completed" && (
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                              )}
+                              {payment.status === "pending" && (
+                                <Clock className="w-3 h-3 mr-1" />
+                              )}
+                              {payment.status === "failed" && (
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                              )}
+                              {payment.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Button variant="ghost" className="w-full mt-4" onClick={() => setActiveTab("payments")}>
+                    View All Payments
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "schools" && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg font-display">Schools</CardTitle>
+                <Dialog open={addSchoolOpen} onOpenChange={setAddSchoolOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Add School
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New School</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddSchool} className="space-y-4">
+                      <div>
+                        <Label htmlFor="school-name">School Name *</Label>
+                        <Input
+                          id="school-name"
+                          value={schoolForm.name}
+                          onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="school-address">Address</Label>
+                        <Input
+                          id="school-address"
+                          value={schoolForm.address}
+                          onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="school-phone">Phone</Label>
+                        <Input
+                          id="school-phone"
+                          value={schoolForm.phone}
+                          onChange={(e) => setSchoolForm({ ...schoolForm, phone: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="school-email">Email</Label>
+                        <Input
+                          id="school-email"
+                          type="email"
+                          value={schoolForm.email}
+                          onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={createSchool.isPending}>
+                        {createSchool.isPending ? "Adding..." : "Add School"}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {schoolsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : schools.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No schools added yet. Add your first school to get started.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {schools.map((school) => (
+                      <div
+                        key={school.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <Building className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{school.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {school.address || "No address"} • {school.email || "No email"}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="default">Active</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "students" && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg font-display">Students</CardTitle>
+                <Dialog open={addStudentOpen} onOpenChange={setAddStudentOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2" disabled={!selectedSchool}>
+                      <Plus className="w-4 h-4" />
+                      Add Student
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Student</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddStudent} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="font-medium text-foreground">
-                            {payment.student}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Class {payment.class} • {payment.date}
-                          </p>
+                          <Label htmlFor="first-name">First Name *</Label>
+                          <Input
+                            id="first-name"
+                            value={studentForm.first_name}
+                            onChange={(e) => setStudentForm({ ...studentForm, first_name: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="last-name">Last Name *</Label>
+                          <Input
+                            id="last-name"
+                            value={studentForm.last_name}
+                            onChange={(e) => setStudentForm({ ...studentForm, last_name: e.target.value })}
+                            required
+                          />
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground">
-                          {payment.amount}
-                        </p>
-                        <Badge
-                          variant={
-                            payment.status === "completed"
-                              ? "default"
-                              : payment.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                          className="mt-1"
-                        >
-                          {payment.status === "completed" && (
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                          )}
-                          {payment.status === "pending" && (
-                            <Clock className="w-3 h-3 mr-1" />
-                          )}
-                          {payment.status === "failed" && (
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                          )}
-                          {payment.status}
-                        </Badge>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="class">Class *</Label>
+                          <Input
+                            id="class"
+                            placeholder="e.g., 10-A"
+                            value={studentForm.class}
+                            onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="section">Section</Label>
+                          <Input
+                            id="section"
+                            value={studentForm.section}
+                            onChange={(e) => setStudentForm({ ...studentForm, section: e.target.value })}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="ghost" className="w-full mt-4">
-                  View All Payments
-                </Button>
+                      <div>
+                        <Label htmlFor="roll-number">Roll Number</Label>
+                        <Input
+                          id="roll-number"
+                          value={studentForm.roll_number}
+                          onChange={(e) => setStudentForm({ ...studentForm, roll_number: e.target.value })}
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={createStudent.isPending}>
+                        {createStudent.isPending ? "Adding..." : "Add Student"}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {!selectedSchool ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Please add a school first to manage students.
+                  </div>
+                ) : studentsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : students.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No students enrolled yet. Add your first student.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {students.map((student) => (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-primary font-semibold text-sm">
+                              {student.first_name.charAt(0)}{student.last_name.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {student.first_name} {student.last_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Class {student.class} {student.section && `• Section ${student.section}`}
+                              {student.roll_number && ` • Roll: ${student.roll_number}`}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">Enrolled</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
+          )}
 
-            {/* Fee Categories */}
+          {activeTab === "payments" && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-display">
-                  Fee Collection by Category
-                </CardTitle>
+                <CardTitle className="text-lg font-display">All Payments</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {feeCategories.map((category) => (
-                  <div key={category.name} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-foreground font-medium">
-                        {category.name}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {category.collected}%
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${category.collected}%` }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                        className="h-full rounded-full bg-primary"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Total: {category.total}
-                    </p>
+              <CardContent>
+                {paymentsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
-                ))}
+                ) : payments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No payments recorded yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-primary font-semibold text-sm">
+                              {payment.students?.first_name?.charAt(0)}{payment.students?.last_name?.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {payment.students?.first_name} {payment.students?.last_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {payment.payment_method} • {payment.payment_date ? format(new Date(payment.payment_date), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-foreground">
+                            ₹{Number(payment.amount).toLocaleString('en-IN')}
+                          </p>
+                          <Badge
+                            variant={
+                              payment.status === "completed"
+                                ? "default"
+                                : payment.status === "pending"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                          >
+                            {payment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </div>
+          )}
+
+          {activeTab === "fees" && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg font-display">Fee Structures</CardTitle>
+                <Dialog open={addFeeOpen} onOpenChange={setAddFeeOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2" disabled={!selectedSchool}>
+                      <Plus className="w-4 h-4" />
+                      Add Fee Structure
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Fee Structure</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddFee} className="space-y-4">
+                      <div>
+                        <Label htmlFor="fee-name">Fee Name *</Label>
+                        <Input
+                          id="fee-name"
+                          placeholder="e.g., Tuition Fee Q1"
+                          value={feeForm.name}
+                          onChange={(e) => setFeeForm({ ...feeForm, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="fee-type">Fee Type *</Label>
+                        <Select
+                          value={feeForm.fee_type}
+                          onValueChange={(value: any) => setFeeForm({ ...feeForm, fee_type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select fee type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="tuition">Tuition</SelectItem>
+                            <SelectItem value="transport">Transport</SelectItem>
+                            <SelectItem value="activities">Activities</SelectItem>
+                            <SelectItem value="library">Library</SelectItem>
+                            <SelectItem value="laboratory">Laboratory</SelectItem>
+                            <SelectItem value="sports">Sports</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="fee-amount">Amount (₹) *</Label>
+                        <Input
+                          id="fee-amount"
+                          type="number"
+                          placeholder="25000"
+                          value={feeForm.amount}
+                          onChange={(e) => setFeeForm({ ...feeForm, amount: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="academic-year">Academic Year *</Label>
+                        <Input
+                          id="academic-year"
+                          placeholder="2024-2025"
+                          value={feeForm.academic_year}
+                          onChange={(e) => setFeeForm({ ...feeForm, academic_year: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="fee-description">Description</Label>
+                        <Input
+                          id="fee-description"
+                          value={feeForm.description}
+                          onChange={(e) => setFeeForm({ ...feeForm, description: e.target.value })}
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={createFee.isPending}>
+                        {createFee.isPending ? "Adding..." : "Add Fee Structure"}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {!selectedSchool ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Please add a school first to manage fee structures.
+                  </div>
+                ) : feeStructures.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No fee structures created yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {feeStructures.map((fee) => (
+                      <div
+                        key={fee.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">{fee.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {fee.fee_type} • {fee.academic_year}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-foreground">
+                            ₹{Number(fee.amount).toLocaleString('en-IN')}
+                          </p>
+                          <Badge variant={fee.is_active ? "default" : "secondary"}>
+                            {fee.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {(activeTab === "notifications" || activeTab === "settings") && (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  <p className="text-lg font-medium mb-2">Coming Soon</p>
+                  <p>This feature is under development.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
