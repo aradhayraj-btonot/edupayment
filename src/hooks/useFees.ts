@@ -93,15 +93,16 @@ export interface CreateFeeStructureData {
 
 export const useCreateFeeStructure = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (fee: CreateFeeStructureData) => {
+      // Cast to any to handle new enum values not yet in generated types
       const { data, error } = await supabase
         .from('fee_structures')
-        .insert([fee as any])
+        .insert([fee] as any)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
