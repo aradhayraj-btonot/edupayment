@@ -51,6 +51,10 @@ import { useFeeStructures, useCreateFeeStructure } from "@/hooks/useFees";
 import { useSchoolNotifications, useSendNotification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -672,6 +676,19 @@ const AdminDashboard = () => {
                         />
                       </div>
                       <div className="border-t pt-4 mt-4">
+                        <Label htmlFor="transport-charge">Transport Charge (₹/month)</Label>
+                        <Input
+                          id="transport-charge"
+                          type="number"
+                          placeholder="e.g., 1500"
+                          value={studentForm.transport_charge}
+                          onChange={(e) => setStudentForm({ ...studentForm, transport_charge: e.target.value })}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Monthly transport fee for this student (charged on 29th of each month).
+                        </p>
+                      </div>
+                      <div className="border-t pt-4 mt-4">
                         <Label htmlFor="parent-email">Parent Email *</Label>
                         <Input
                           id="parent-email"
@@ -726,11 +743,18 @@ const AdminDashboard = () => {
                               Class {student.class} {student.section && `• Section ${student.section}`}
                               {student.roll_number && ` • Roll: ${student.roll_number}`}
                             </p>
-                            {student.parent_email && (
-                              <p className="text-xs text-primary/70 mt-1">
-                                Parent: {student.parent_email}
-                              </p>
-                            )}
+                            <div className="flex gap-2 mt-1">
+                              {student.parent_email && (
+                                <p className="text-xs text-primary/70">
+                                  Parent: {student.parent_email}
+                                </p>
+                              )}
+                              {student.transport_charge > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  Transport: ₹{Number(student.transport_charge).toLocaleString('en-IN')}/mo
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <Badge variant={student.parent_id ? "default" : "secondary"}>
@@ -834,21 +858,39 @@ const AdminDashboard = () => {
                         <Label htmlFor="fee-type">Fee Type *</Label>
                         <Select
                           value={feeForm.fee_type}
-                          onValueChange={(value: any) => setFeeForm({ ...feeForm, fee_type: value })}
+                          onValueChange={(value: any) => {
+                            // Auto-set recurrence based on fee type
+                            let recurrence = feeForm.recurrence_type;
+                            if (value === 'tuition' || value === 'transport') {
+                              recurrence = 'monthly';
+                            } else if (value === 'annually') {
+                              recurrence = 'annually';
+                            } else if (value === 'other') {
+                              recurrence = 'one_time';
+                            }
+                            setFeeForm({ ...feeForm, fee_type: value, recurrence_type: recurrence });
+                          }}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select fee type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="tuition">Tuition</SelectItem>
-                            <SelectItem value="transport">Transport</SelectItem>
+                            <SelectItem value="tuition">Tuition (Monthly on 29th)</SelectItem>
+                            <SelectItem value="transport">Transport (Monthly on 29th)</SelectItem>
+                            <SelectItem value="annually">Annual Fee (On specific date)</SelectItem>
                             <SelectItem value="activities">Activities</SelectItem>
                             <SelectItem value="library">Library</SelectItem>
                             <SelectItem value="laboratory">Laboratory</SelectItem>
                             <SelectItem value="sports">Sports</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            <SelectItem value="other">Other / Instant (One-time)</SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {feeForm.fee_type === 'tuition' && 'Charged every 29th of the month'}
+                          {feeForm.fee_type === 'transport' && 'Variable per student, charged every 29th of the month'}
+                          {feeForm.fee_type === 'annually' && 'Charged once per year on the specified date'}
+                          {feeForm.fee_type === 'other' && 'One-time instant fee, charged once when assigned'}
+                        </p>
                       </div>
                       <div>
                         <Label htmlFor="fee-amount">Amount (₹) *</Label>
@@ -861,6 +903,37 @@ const AdminDashboard = () => {
                           required
                         />
                       </div>
+                      {feeForm.fee_type === 'annually' && (
+                        <div className="flex flex-col gap-2">
+                          <Label>Annual Fee Due Date *</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !feeForm.due_date && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {feeForm.due_date ? format(new Date(feeForm.due_date), "PPP") : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={feeForm.due_date ? new Date(feeForm.due_date) : undefined}
+                                onSelect={(date) => setFeeForm({ ...feeForm, due_date: date ? format(date, 'yyyy-MM-dd') : '' })}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <p className="text-xs text-muted-foreground">
+                            Annual fee will be charged on this date each year.
+                          </p>
+                        </div>
+                      )}
                       <div>
                         <Label htmlFor="academic-year">Academic Year *</Label>
                         <Input
@@ -906,15 +979,23 @@ const AdminDashboard = () => {
                           <p className="font-medium text-foreground">{fee.name}</p>
                           <p className="text-sm text-muted-foreground">
                             {fee.fee_type} • {fee.academic_year}
+                            {(fee as any).recurrence_type === 'monthly' && ' • Monthly (29th)'}
+                            {(fee as any).recurrence_type === 'annually' && fee.due_date && ` • Annual (${format(new Date(fee.due_date), 'MMM dd')})`}
+                            {(fee as any).recurrence_type === 'one_time' && ' • One-time'}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-foreground">
                             ₹{Number(fee.amount).toLocaleString('en-IN')}
                           </p>
-                          <Badge variant={fee.is_active ? "default" : "secondary"}>
-                            {fee.is_active ? "Active" : "Inactive"}
-                          </Badge>
+                          <div className="flex gap-1 justify-end mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {(fee as any).recurrence_type === 'monthly' ? 'Monthly' : (fee as any).recurrence_type === 'annually' ? 'Annually' : 'One-time'}
+                            </Badge>
+                            <Badge variant={fee.is_active ? "default" : "secondary"}>
+                              {fee.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     ))}
