@@ -6,12 +6,13 @@ export interface FeeStructure {
   id: string;
   school_id: string;
   name: string;
-  fee_type: 'tuition' | 'transport' | 'activities' | 'library' | 'laboratory' | 'sports' | 'other';
+  fee_type: 'tuition' | 'transport' | 'activities' | 'library' | 'laboratory' | 'sports' | 'annually' | 'other';
   amount: number;
   due_date: string | null;
   academic_year: string;
   description: string | null;
   is_active: boolean;
+  recurrence_type: 'monthly' | 'annually' | 'one_time';
   created_at: string;
   updated_at: string;
 }
@@ -82,11 +83,12 @@ export const useStudentFees = (studentId?: string) => {
 export interface CreateFeeStructureData {
   school_id: string;
   name: string;
-  fee_type: 'tuition' | 'transport' | 'activities' | 'library' | 'laboratory' | 'sports' | 'other';
+  fee_type: 'tuition' | 'transport' | 'activities' | 'library' | 'laboratory' | 'sports' | 'annually' | 'other';
   amount: number;
   due_date?: string | null;
   academic_year: string;
   description?: string | null;
+  recurrence_type: 'monthly' | 'annually' | 'one_time';
 }
 
 export const useCreateFeeStructure = () => {
@@ -96,7 +98,7 @@ export const useCreateFeeStructure = () => {
     mutationFn: async (fee: CreateFeeStructureData) => {
       const { data, error } = await supabase
         .from('fee_structures')
-        .insert(fee)
+        .insert([fee])
         .select()
         .single();
       
