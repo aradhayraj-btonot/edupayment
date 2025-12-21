@@ -6,6 +6,7 @@ export interface Student {
   id: string;
   school_id: string;
   parent_id: string | null;
+  parent_email: string | null;
   first_name: string;
   last_name: string;
   class: string;
@@ -19,6 +20,7 @@ export interface Student {
 export interface CreateStudentData {
   school_id: string;
   parent_id?: string | null;
+  parent_email?: string | null;
   first_name: string;
   last_name: string;
   class: string;

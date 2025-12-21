@@ -25,32 +25,74 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useParentStudents } from "@/hooks/useStudents";
-import { useParentPayments } from "@/hooks/usePayments";
+import { useParentPayments, useCreatePayment } from "@/hooks/usePayments";
 import { useStudentFees } from "@/hooks/useFees";
+import { useSchools } from "@/hooks/useSchools";
 import { format } from "date-fns";
+import { QrCode, Copy, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedFeeForPayment, setSelectedFeeForPayment] = useState<any>(null);
 
   // Data hooks
   const { data: students = [], isLoading: studentsLoading } = useParentStudents();
   const { data: payments = [], isLoading: paymentsLoading } = useParentPayments();
+  const { data: schools = [] } = useSchools();
   const selectedStudent = students[0];
   const { data: studentFees = [] } = useStudentFees(selectedStudent?.id);
+  const createPayment = useCreatePayment();
+
+  // Get school details for payment info
+  const studentSchool = schools.find(s => s.id === selectedStudent?.school_id);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
   };
 
+  const handlePayFee = (fee: any) => {
+    setSelectedFeeForPayment(fee);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedFeeForPayment || !selectedStudent || !user) return;
+    
+    await createPayment.mutateAsync({
+      student_id: selectedStudent.id,
+      student_fee_id: selectedFeeForPayment.id,
+      amount: Number(selectedFeeForPayment.amount) - Number(selectedFeeForPayment.discount || 0),
+      payment_method: "UPI",
+      parent_id: user.id,
+    });
+    
+    setPaymentDialogOpen(false);
+    setSelectedFeeForPayment(null);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
+
   // Calculate totals from real data
   const completedPayments = payments.filter(p => p.status === 'completed');
   const pendingPayments = payments.filter(p => p.status === 'pending');
   const totalPaid = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalPending = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const pendingFromFees = studentFees.reduce((sum, f) => sum + (Number(f.amount) - Number(f.discount || 0)), 0);
+  const totalPending = pendingFromFees;
 
   const feesSummary = {
     total: `₹${(totalPaid + totalPending).toLocaleString('en-IN')}`,
@@ -323,28 +365,38 @@ const ParentDashboard = () => {
                               </span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-foreground">
-                              ₹{(Number(fee.amount) - Number(fee.discount)).toLocaleString('en-IN')}
-                            </p>
-                            <Badge
-                              variant={new Date(fee.due_date) < new Date() ? "destructive" : "secondary"}
-                              className="mt-1"
-                            >
-                              {new Date(fee.due_date) < new Date() ? (
-                                <>
-                                  <Clock className="w-3 h-3 mr-1" /> Overdue
-                                </>
-                              ) : (
-                                "Upcoming"
-                              )}
-                            </Badge>
+                          <div className="text-right flex items-center gap-3">
+                            <div>
+                              <p className="font-semibold text-foreground">
+                                ₹{(Number(fee.amount) - Number(fee.discount || 0)).toLocaleString('en-IN')}
+                              </p>
+                              <Badge
+                                variant={new Date(fee.due_date) < new Date() ? "destructive" : "secondary"}
+                                className="mt-1"
+                              >
+                                {new Date(fee.due_date) < new Date() ? (
+                                  <>
+                                    <Clock className="w-3 h-3 mr-1" /> Overdue
+                                  </>
+                                ) : (
+                                  "Upcoming"
+                                )}
+                              </Badge>
+                            </div>
+                            <Button size="sm" onClick={() => handlePayFee(fee)}>
+                              Pay Now
+                            </Button>
                           </div>
                         </div>
                       ))
                     )}
                     {totalPending > 0 && (
-                      <Button variant="success" className="w-full mt-4" size="lg">
+                      <Button 
+                        variant="default" 
+                        className="w-full mt-4 bg-success hover:bg-success/90" 
+                        size="lg"
+                        onClick={() => setActiveTab("pay")}
+                      >
                         <CreditCard className="w-4 h-4 mr-2" />
                         Pay All Pending ({feesSummary.pending})
                       </Button>
@@ -516,7 +568,129 @@ const ParentDashboard = () => {
             </Card>
           )}
 
-          {(activeTab === "pay" || activeTab === "notifications" || activeTab === "settings") && (
+          {activeTab === "pay" && (
+            <div className="space-y-6">
+              {/* School Payment Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <QrCode className="w-5 h-5" />
+                    Pay School Fees
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!studentSchool ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No school linked to your student yet.
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-8">
+                      {/* QR Code Section */}
+                      <div className="flex flex-col items-center justify-center p-6 bg-secondary/30 rounded-xl">
+                        {studentSchool.upi_qr_code_url ? (
+                          <img 
+                            src={studentSchool.upi_qr_code_url} 
+                            alt="Payment QR Code" 
+                            className="w-48 h-48 rounded-lg mb-4"
+                          />
+                        ) : (
+                          <div className="w-48 h-48 bg-secondary rounded-lg flex items-center justify-center mb-4">
+                            <QrCode className="w-24 h-24 text-muted-foreground" />
+                          </div>
+                        )}
+                        <p className="text-sm text-muted-foreground text-center">
+                          Scan this QR code with any UPI app
+                        </p>
+                      </div>
+
+                      {/* UPI Details Section */}
+                      <div className="space-y-6">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-2">School Name</p>
+                          <p className="text-lg font-semibold text-foreground">{studentSchool.name}</p>
+                        </div>
+                        
+                        {studentSchool.upi_id && (
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">UPI ID</p>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 bg-secondary px-4 py-3 rounded-lg text-foreground font-mono">
+                                {studentSchool.upi_id}
+                              </code>
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                onClick={() => copyToClipboard(studentSchool.upi_id!)}
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="border-t pt-4">
+                          <p className="text-sm text-muted-foreground mb-2">Total Pending Amount</p>
+                          <p className="text-3xl font-bold text-coral">{feesSummary.pending}</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-foreground">Pay using:</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {["GPay", "PhonePe", "Paytm", "BHIM"].map((app) => (
+                              <button 
+                                key={app}
+                                className="p-3 bg-secondary rounded-lg text-sm font-medium hover:bg-primary/10 transition-colors"
+                              >
+                                {app}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Pending Fees List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display">Select Fee to Pay</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {studentFees.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No pending fees.
+                    </div>
+                  ) : (
+                    studentFees.map((fee) => (
+                      <div
+                        key={fee.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">{fee.fee_structures?.name || 'Fee'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Due: {format(new Date(fee.due_date), 'dd MMM yyyy')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <p className="font-bold text-lg">
+                            ₹{(Number(fee.amount) - Number(fee.discount || 0)).toLocaleString('en-IN')}
+                          </p>
+                          <Button onClick={() => handlePayFee(fee)}>
+                            Pay Now
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {(activeTab === "notifications" || activeTab === "settings") && (
             <Card>
               <CardContent className="py-12">
                 <div className="text-center text-muted-foreground">
@@ -528,6 +702,79 @@ const ParentDashboard = () => {
           )}
         </div>
       </main>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Complete Payment</DialogTitle>
+          </DialogHeader>
+          
+          {selectedFeeForPayment && studentSchool && (
+            <div className="space-y-6">
+              {/* Amount */}
+              <div className="text-center p-4 bg-primary/5 rounded-lg">
+                <p className="text-sm text-muted-foreground">Amount to Pay</p>
+                <p className="text-3xl font-bold text-primary">
+                  ₹{(Number(selectedFeeForPayment.amount) - Number(selectedFeeForPayment.discount || 0)).toLocaleString('en-IN')}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedFeeForPayment.fee_structures?.name}
+                </p>
+              </div>
+
+              {/* QR Code */}
+              <div className="flex flex-col items-center">
+                {studentSchool.upi_qr_code_url ? (
+                  <img 
+                    src={studentSchool.upi_qr_code_url} 
+                    alt="Payment QR Code" 
+                    className="w-40 h-40 rounded-lg mb-3"
+                  />
+                ) : (
+                  <div className="w-40 h-40 bg-secondary rounded-lg flex items-center justify-center mb-3">
+                    <QrCode className="w-16 h-16 text-muted-foreground" />
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">Scan with any UPI app</p>
+              </div>
+
+              {/* UPI ID */}
+              {studentSchool.upi_id && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Or pay to UPI ID:</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-sm font-mono">
+                      {studentSchool.upi_id}
+                    </code>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => copyToClipboard(studentSchool.upi_id!)}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm Button */}
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={handleConfirmPayment}
+                disabled={createPayment.isPending}
+              >
+                {createPayment.isPending ? "Processing..." : "I've Completed the Payment"}
+              </Button>
+              
+              <p className="text-xs text-muted-foreground text-center">
+                After making payment via UPI, click above to confirm. Your payment will be verified by the school.
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
