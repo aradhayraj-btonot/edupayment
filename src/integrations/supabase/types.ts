@@ -64,35 +64,72 @@ export type Database = {
           },
         ]
       }
-      notifications: {
+      notification_reads: {
         Row: {
-          created_at: string
           id: string
-          is_read: boolean | null
-          message: string
-          title: string
-          type: string | null
+          notification_id: string
+          read_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string
           id?: string
-          is_read?: boolean | null
-          message: string
-          title: string
-          type?: string | null
+          notification_id: string
+          read_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string
           id?: string
-          is_read?: boolean | null
-          message?: string
-          title?: string
-          type?: string | null
+          notification_id?: string
+          read_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          school_id: string
+          title: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          school_id: string
+          title: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          school_id?: string
+          title?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
