@@ -14,11 +14,14 @@ export interface Payment {
   payment_date: string | null;
   receipt_url: string | null;
   notes: string | null;
+  screenshot_url: string | null;
   created_at: string;
   students?: {
     first_name: string;
     last_name: string;
     class: string;
+    parent_email: string | null;
+    school_id: string;
   };
 }
 
@@ -33,7 +36,9 @@ export const usePayments = () => {
           students (
             first_name,
             last_name,
-            class
+            class,
+            parent_email,
+            school_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -55,7 +60,9 @@ export const useParentPayments = () => {
           students (
             first_name,
             last_name,
-            class
+            class,
+            parent_email,
+            school_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -75,6 +82,7 @@ export interface CreatePaymentData {
   transaction_id?: string;
   status?: 'pending' | 'completed' | 'failed' | 'refunded';
   notes?: string;
+  screenshot_url?: string;
 }
 
 export const useCreatePayment = () => {
@@ -84,7 +92,7 @@ export const useCreatePayment = () => {
     mutationFn: async (payment: CreatePaymentData) => {
       const { data, error } = await supabase
         .from('payments')
-        .insert(payment)
+        .insert(payment as any)
         .select()
         .single();
       
@@ -99,6 +107,103 @@ export const useCreatePayment = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message);
+    },
+  });
+};
+
+export const useUploadScreenshot = () => {
+  return useMutation({
+    mutationFn: async ({ file, paymentId, userId }: { file: File; paymentId: string; userId: string }) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${paymentId}-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('payment-screenshots')
+        .upload(fileName, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-screenshots')
+        .getPublicUrl(fileName);
+      
+      // Update payment with screenshot URL
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({ screenshot_url: publicUrl } as any)
+        .eq('id', paymentId);
+      
+      if (updateError) throw updateError;
+      
+      return publicUrl;
+    },
+    onSuccess: () => {
+      toast.success('Screenshot uploaded successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to upload screenshot: ' + error.message);
+    },
+  });
+};
+
+export const useVerifyPayment = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ paymentId, action }: { paymentId: string; action: 'approve' | 'reject' }) => {
+      const newStatus = action === 'approve' ? 'completed' : 'failed';
+      
+      const { data, error } = await supabase
+        .from('payments')
+        .update({ status: newStatus } as any)
+        .eq('id', paymentId)
+        .select(`
+          *,
+          students (
+            first_name,
+            last_name,
+            parent_email,
+            school_id
+          )
+        `)
+        .single();
+      
+      if (error) throw error;
+      return { payment: data, action };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['parent-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['student-fees'] });
+      toast.success(data.action === 'approve' ? 'Payment verified successfully' : 'Payment rejected');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const usePendingPayments = () => {
+  return useQuery({
+    queryKey: ['pending-payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          students (
+            first_name,
+            last_name,
+            class,
+            parent_email,
+            school_id
+          )
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Payment[];
     },
   });
 };
