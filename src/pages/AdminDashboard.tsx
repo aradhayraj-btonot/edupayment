@@ -79,6 +79,7 @@ const AdminDashboard = () => {
     class: "",
     section: "",
     roll_number: "",
+    parent_email: "",
   });
 
   const [schoolForm, setSchoolForm] = useState({
@@ -86,6 +87,8 @@ const AdminDashboard = () => {
     address: "",
     phone: "",
     email: "",
+    upi_id: "",
+    upi_qr_code_url: "",
   });
 
   const [feeForm, setFeeForm] = useState({
@@ -112,9 +115,10 @@ const AdminDashboard = () => {
       class: studentForm.class,
       section: studentForm.section || null,
       roll_number: studentForm.roll_number || null,
+      parent_email: studentForm.parent_email || null,
     });
     
-    setStudentForm({ first_name: "", last_name: "", class: "", section: "", roll_number: "" });
+    setStudentForm({ first_name: "", last_name: "", class: "", section: "", roll_number: "", parent_email: "" });
     setAddStudentOpen(false);
   };
 
@@ -125,9 +129,11 @@ const AdminDashboard = () => {
       address: schoolForm.address || null,
       phone: schoolForm.phone || null,
       email: schoolForm.email || null,
+      upi_id: schoolForm.upi_id || null,
+      upi_qr_code_url: schoolForm.upi_qr_code_url || null,
     });
     
-    setSchoolForm({ name: "", address: "", phone: "", email: "" });
+    setSchoolForm({ name: "", address: "", phone: "", email: "", upi_id: "", upi_qr_code_url: "" });
     setAddSchoolOpen(false);
   };
 
@@ -504,6 +510,29 @@ const AdminDashboard = () => {
                           onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
                         />
                       </div>
+                      <div className="border-t pt-4 mt-4">
+                        <p className="text-sm font-medium text-foreground mb-3">Payment Details</p>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="upi-id">UPI ID *</Label>
+                            <Input
+                              id="upi-id"
+                              placeholder="e.g., school@upi"
+                              value={schoolForm.upi_id}
+                              onChange={(e) => setSchoolForm({ ...schoolForm, upi_id: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="qr-url">Payment QR Code URL</Label>
+                            <Input
+                              id="qr-url"
+                              placeholder="https://..."
+                              value={schoolForm.upi_qr_code_url}
+                              onChange={(e) => setSchoolForm({ ...schoolForm, upi_qr_code_url: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      </div>
                       <Button type="submit" className="w-full" disabled={createSchool.isPending}>
                         {createSchool.isPending ? "Adding..." : "Add School"}
                       </Button>
@@ -611,6 +640,20 @@ const AdminDashboard = () => {
                           onChange={(e) => setStudentForm({ ...studentForm, roll_number: e.target.value })}
                         />
                       </div>
+                      <div className="border-t pt-4 mt-4">
+                        <Label htmlFor="parent-email">Parent Email *</Label>
+                        <Input
+                          id="parent-email"
+                          type="email"
+                          placeholder="Parent's email to link account"
+                          value={studentForm.parent_email}
+                          onChange={(e) => setStudentForm({ ...studentForm, parent_email: e.target.value })}
+                          required
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          When parent signs up with this email, they will automatically see this student.
+                        </p>
+                      </div>
                       <Button type="submit" className="w-full" disabled={createStudent.isPending}>
                         {createStudent.isPending ? "Adding..." : "Add Student"}
                       </Button>
@@ -652,9 +695,16 @@ const AdminDashboard = () => {
                               Class {student.class} {student.section && `• Section ${student.section}`}
                               {student.roll_number && ` • Roll: ${student.roll_number}`}
                             </p>
+                            {student.parent_email && (
+                              <p className="text-xs text-primary/70 mt-1">
+                                Parent: {student.parent_email}
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <Badge variant="secondary">Enrolled</Badge>
+                        <Badge variant={student.parent_id ? "default" : "secondary"}>
+                          {student.parent_id ? "Linked" : "Pending"}
+                        </Badge>
                       </div>
                     ))}
                   </div>

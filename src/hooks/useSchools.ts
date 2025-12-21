@@ -9,6 +9,8 @@ export interface School {
   phone: string | null;
   email: string | null;
   logo_url: string | null;
+  upi_id: string | null;
+  upi_qr_code_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -18,6 +20,8 @@ export interface CreateSchoolData {
   address?: string | null;
   phone?: string | null;
   email?: string | null;
+  upi_id?: string | null;
+  upi_qr_code_url?: string | null;
 }
 
 export const useSchools = () => {

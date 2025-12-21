@@ -194,6 +194,8 @@ export type Database = {
           name: string
           phone: string | null
           updated_at: string
+          upi_id: string | null
+          upi_qr_code_url: string | null
         }
         Insert: {
           address?: string | null
@@ -204,6 +206,8 @@ export type Database = {
           name: string
           phone?: string | null
           updated_at?: string
+          upi_id?: string | null
+          upi_qr_code_url?: string | null
         }
         Update: {
           address?: string | null
@@ -214,6 +218,8 @@ export type Database = {
           name?: string
           phone?: string | null
           updated_at?: string
+          upi_id?: string | null
+          upi_qr_code_url?: string | null
         }
         Relationships: []
       }
@@ -270,6 +276,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          parent_email: string | null
           parent_id: string | null
           roll_number: string | null
           school_id: string
@@ -283,6 +290,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          parent_email?: string | null
           parent_id?: string | null
           roll_number?: string | null
           school_id: string
@@ -296,6 +304,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          parent_email?: string | null
           parent_id?: string | null
           roll_number?: string | null
           school_id?: string
