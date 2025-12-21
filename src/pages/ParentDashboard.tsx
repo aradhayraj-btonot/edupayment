@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,11 +21,13 @@ import {
   Phone,
   Menu,
   X,
+  Upload,
+  Image,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useParentStudents } from "@/hooks/useStudents";
-import { useParentPayments, useCreatePayment } from "@/hooks/usePayments";
+import { useParentPayments, useCreatePayment, useUploadScreenshot } from "@/hooks/usePayments";
 import { useStudentFees } from "@/hooks/useFees";
 import { useSchools } from "@/hooks/useSchools";
 import { useParentNotifications, useNotificationReads, useMarkNotificationRead } from "@/hooks/useNotifications";
@@ -38,6 +40,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
@@ -57,6 +61,14 @@ const ParentDashboard = () => {
   const { data: notificationReads = [] } = useNotificationReads();
   const markAsRead = useMarkNotificationRead();
   const createPayment = useCreatePayment();
+  const uploadScreenshot = useUploadScreenshot();
+  
+  // Screenshot upload state
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [paymentStep, setPaymentStep] = useState<'qr' | 'upload'>('qr');
+  const [createdPaymentId, setCreatedPaymentId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate unread count
   const readNotificationIds = new Set(notificationReads.map(r => r.notification_id));
@@ -72,13 +84,17 @@ const ParentDashboard = () => {
 
   const handlePayFee = (fee: any) => {
     setSelectedFeeForPayment(fee);
+    setPaymentStep('qr');
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    setCreatedPaymentId(null);
     setPaymentDialogOpen(true);
   };
 
   const handleConfirmPayment = async () => {
     if (!selectedFeeForPayment || !selectedStudent || !user) return;
     
-    await createPayment.mutateAsync({
+    const result = await createPayment.mutateAsync({
       student_id: selectedStudent.id,
       student_fee_id: selectedFeeForPayment.id,
       amount: Number(selectedFeeForPayment.amount) - Number(selectedFeeForPayment.discount || 0),
@@ -86,8 +102,47 @@ const ParentDashboard = () => {
       parent_id: user.id,
     });
     
+    // Move to upload step
+    setCreatedPaymentId(result.id);
+    setPaymentStep('upload');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshotFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadScreenshot = async () => {
+    if (!screenshotFile || !createdPaymentId || !user) return;
+    
+    await uploadScreenshot.mutateAsync({
+      file: screenshotFile,
+      paymentId: createdPaymentId,
+      userId: user.id,
+    });
+    
+    // Close dialog and reset
     setPaymentDialogOpen(false);
     setSelectedFeeForPayment(null);
+    setPaymentStep('qr');
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    setCreatedPaymentId(null);
+    toast.success("Payment submitted for verification!");
+  };
+
+  const handleClosePaymentDialog = () => {
+    setPaymentDialogOpen(false);
+    setPaymentStep('qr');
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
   };
 
   const copyToClipboard = (text: string) => {
@@ -800,10 +855,12 @@ const ParentDashboard = () => {
       </main>
 
       {/* Payment Dialog */}
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+      <Dialog open={paymentDialogOpen} onOpenChange={handleClosePaymentDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Complete Payment</DialogTitle>
+            <DialogTitle>
+              {paymentStep === 'qr' ? 'Complete Payment' : 'Upload Payment Screenshot'}
+            </DialogTitle>
           </DialogHeader>
           
           {selectedFeeForPayment && studentSchool && (
@@ -819,54 +876,116 @@ const ParentDashboard = () => {
                 </p>
               </div>
 
-              {/* QR Code */}
-              <div className="flex flex-col items-center">
-                {studentSchool.upi_qr_code_url ? (
-                  <img 
-                    src={studentSchool.upi_qr_code_url} 
-                    alt="Payment QR Code" 
-                    className="w-40 h-40 rounded-lg mb-3"
-                  />
-                ) : (
-                  <div className="w-40 h-40 bg-secondary rounded-lg flex items-center justify-center mb-3">
-                    <QrCode className="w-16 h-16 text-muted-foreground" />
+              {paymentStep === 'qr' ? (
+                <>
+                  {/* QR Code */}
+                  <div className="flex flex-col items-center">
+                    {studentSchool.upi_qr_code_url ? (
+                      <img 
+                        src={studentSchool.upi_qr_code_url} 
+                        alt="Payment QR Code" 
+                        className="w-40 h-40 rounded-lg mb-3"
+                      />
+                    ) : (
+                      <div className="w-40 h-40 bg-secondary rounded-lg flex items-center justify-center mb-3">
+                        <QrCode className="w-16 h-16 text-muted-foreground" />
+                      </div>
+                    )}
+                    <p className="text-sm text-muted-foreground">Scan with any UPI app</p>
                   </div>
-                )}
-                <p className="text-sm text-muted-foreground">Scan with any UPI app</p>
-              </div>
 
-              {/* UPI ID */}
-              {studentSchool.upi_id && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Or pay to UPI ID:</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-sm font-mono">
-                      {studentSchool.upi_id}
-                    </code>
+                  {/* UPI ID */}
+                  {studentSchool.upi_id && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Or pay to UPI ID:</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-sm font-mono">
+                          {studentSchool.upi_id}
+                        </code>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => copyToClipboard(studentSchool.upi_id!)}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Confirm Button */}
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleConfirmPayment}
+                    disabled={createPayment.isPending}
+                  >
+                    {createPayment.isPending ? "Processing..." : "I've Completed the Payment"}
+                  </Button>
+                  
+                  <p className="text-xs text-muted-foreground text-center">
+                    After making payment via UPI, click above to confirm. Your payment will be verified by the school.
+                  </p>
+                </>
+              ) : (
+                <>
+                  {/* Screenshot Upload Step */}
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <CheckCircle className="w-12 h-12 text-success mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Payment recorded! Please upload your payment screenshot for verification.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Upload Payment Screenshot</Label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
+                      >
+                        {screenshotPreview ? (
+                          <img 
+                            src={screenshotPreview} 
+                            alt="Screenshot preview" 
+                            className="max-h-48 mx-auto rounded-lg"
+                          />
+                        ) : (
+                          <>
+                            <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">
+                              Click to upload or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              PNG, JPG up to 5MB
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
                     <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(studentSchool.upi_id!)}
+                      className="w-full" 
+                      size="lg"
+                      onClick={handleUploadScreenshot}
+                      disabled={!screenshotFile || uploadScreenshot.isPending}
                     >
-                      <Copy className="w-4 h-4" />
+                      {uploadScreenshot.isPending ? "Uploading..." : "Submit for Verification"}
                     </Button>
+                    
+                    <p className="text-xs text-muted-foreground text-center">
+                      Your payment will be verified by the school admin. You'll receive a receipt notification once approved.
+                    </p>
                   </div>
-                </div>
+                </>
               )}
-
-              {/* Confirm Button */}
-              <Button 
-                className="w-full" 
-                size="lg"
-                onClick={handleConfirmPayment}
-                disabled={createPayment.isPending}
-              >
-                {createPayment.isPending ? "Processing..." : "I've Completed the Payment"}
-              </Button>
-              
-              <p className="text-xs text-muted-foreground text-center">
-                After making payment via UPI, click above to confirm. Your payment will be verified by the school.
-              </p>
             </div>
           )}
         </DialogContent>

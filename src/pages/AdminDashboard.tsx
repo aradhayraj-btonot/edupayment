@@ -45,7 +45,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudents, useCreateStudent } from "@/hooks/useStudents";
-import { usePayments, usePaymentStats } from "@/hooks/usePayments";
+import { usePayments, usePaymentStats, usePendingPayments, useVerifyPayment } from "@/hooks/usePayments";
 import { useSchools, useCreateSchool } from "@/hooks/useSchools";
 import { useFeeStructures, useCreateFeeStructure } from "@/hooks/useFees";
 import { useSchoolNotifications, useSendNotification } from "@/hooks/useNotifications";
@@ -53,7 +53,7 @@ import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ShieldCheck, Eye, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const AdminDashboard = () => {
@@ -80,12 +80,17 @@ const AdminDashboard = () => {
   const { data: paymentStats } = usePaymentStats();
   const { data: feeStructures = [] } = useFeeStructures(selectedSchool?.id);
   const { data: notifications = [], isLoading: notificationsLoading } = useSchoolNotifications(selectedSchool?.id);
+  const { data: pendingPayments = [], isLoading: pendingPaymentsLoading } = usePendingPayments();
 
   // Mutations
   const createStudent = useCreateStudent();
   const createSchool = useCreateSchool();
   const createFee = useCreateFeeStructure();
   const sendNotification = useSendNotification();
+  const verifyPayment = useVerifyPayment();
+
+  // Screenshot preview state
+  const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
 
   // Form states
   const [studentForm, setStudentForm] = useState({
@@ -228,6 +233,7 @@ const AdminDashboard = () => {
 
   const navItems = [
     { icon: Home, label: "Dashboard", key: "dashboard" },
+    { icon: ShieldCheck, label: "Verify Payments", key: "verify" },
     { icon: Building, label: "Schools", key: "schools" },
     { icon: Users, label: "Students", key: "students" },
     { icon: CreditCard, label: "Payments", key: "payments" },
@@ -270,7 +276,12 @@ const AdminDashboard = () => {
                 }`}
               >
                 <item.icon className="w-5 h-5" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.key === "verify" && pendingPayments.length > 0 && (
+                  <Badge variant="destructive" className="ml-auto">
+                    {pendingPayments.length}
+                  </Badge>
+                )}
               </button>
             ))}
           </nav>
@@ -335,6 +346,7 @@ const AdminDashboard = () => {
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {activeTab === "dashboard" && "Welcome back! Here's your school's financial overview."}
+                  {activeTab === "verify" && `${pendingPayments.length} payments awaiting verification`}
                   {activeTab === "students" && `${students.length} students enrolled`}
                   {activeTab === "payments" && `${payments.length} total payments`}
                   {activeTab === "schools" && `${schools.length} schools registered`}
@@ -828,6 +840,127 @@ const AdminDashboard = () => {
             </Card>
           )}
 
+          {activeTab === "verify" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-display flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5" />
+                  Verify Pending Payments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingPaymentsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : pendingPayments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success" />
+                    <p>No pending payments to verify.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingPayments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="p-4 rounded-lg bg-secondary/50 border border-border"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
+                              <Clock className="w-6 h-6 text-warning" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold text-foreground">
+                                {payment.students?.first_name} {payment.students?.last_name}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Class {payment.students?.class} • {payment.payment_method}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {payment.created_at ? format(new Date(payment.created_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-foreground">
+                                ₹{Number(payment.amount).toLocaleString('en-IN')}
+                              </p>
+                              <Badge variant="secondary" className="mt-1">
+                                Pending Verification
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Screenshot Preview */}
+                        {payment.screenshot_url && (
+                          <div className="mt-4 p-3 bg-background rounded-lg">
+                            <p className="text-sm font-medium text-foreground mb-2">Payment Screenshot:</p>
+                            <div className="relative">
+                              <img 
+                                src={payment.screenshot_url} 
+                                alt="Payment screenshot" 
+                                className="max-h-48 rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => setPreviewScreenshot(payment.screenshot_url)}
+                              />
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="absolute top-2 right-2 gap-1"
+                                onClick={() => setPreviewScreenshot(payment.screenshot_url)}
+                              >
+                                <Eye className="w-3 h-3" />
+                                View Full
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {!payment.screenshot_url && (
+                          <div className="mt-4 p-3 bg-destructive/10 rounded-lg">
+                            <p className="text-sm text-destructive">No screenshot uploaded by parent.</p>
+                          </div>
+                        )}
+                        
+                        {/* Action Buttons */}
+                        <div className="mt-4 flex gap-3">
+                          <Button 
+                            className="flex-1 gap-2"
+                            onClick={async () => {
+                              await verifyPayment.mutateAsync({ paymentId: payment.id, action: 'approve' });
+                              // Send receipt notification
+                              if (selectedSchool && payment.students) {
+                                await sendNotification.mutateAsync({
+                                  school_id: payment.students.school_id,
+                                  title: "Payment Receipt - Verified",
+                                  message: `Your payment of ₹${Number(payment.amount).toLocaleString('en-IN')} for ${payment.students.first_name} ${payment.students.last_name} has been verified. Thank you for your payment!`,
+                                  type: "success",
+                                });
+                              }
+                            }}
+                            disabled={verifyPayment.isPending}
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            Approve & Send Receipt
+                          </Button>
+                          <Button 
+                            variant="destructive"
+                            className="gap-2"
+                            onClick={() => verifyPayment.mutateAsync({ paymentId: payment.id, action: 'reject' })}
+                            disabled={verifyPayment.isPending}
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {activeTab === "fees" && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -1133,6 +1266,22 @@ const AdminDashboard = () => {
           )}
         </div>
       </main>
+
+      {/* Screenshot Preview Dialog */}
+      <Dialog open={!!previewScreenshot} onOpenChange={() => setPreviewScreenshot(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Payment Screenshot</DialogTitle>
+          </DialogHeader>
+          {previewScreenshot && (
+            <img 
+              src={previewScreenshot} 
+              alt="Payment screenshot full view" 
+              className="w-full rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
