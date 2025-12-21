@@ -13,6 +13,7 @@ export interface Student {
   section: string | null;
   roll_number: string | null;
   admission_date: string | null;
+  transport_charge: number;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +27,7 @@ export interface CreateStudentData {
   class: string;
   section?: string | null;
   roll_number?: string | null;
+  transport_charge?: number;
 }
 
 export const useStudents = (schoolId?: string) => {

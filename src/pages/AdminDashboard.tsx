@@ -91,6 +91,7 @@ const AdminDashboard = () => {
     section: "",
     roll_number: "",
     parent_email: "",
+    transport_charge: "",
   });
 
   const [schoolForm, setSchoolForm] = useState({
@@ -104,10 +105,12 @@ const AdminDashboard = () => {
 
   const [feeForm, setFeeForm] = useState({
     name: "",
-    fee_type: "tuition" as const,
+    fee_type: "tuition" as 'tuition' | 'transport' | 'activities' | 'library' | 'laboratory' | 'sports' | 'annually' | 'other',
     amount: "",
     academic_year: "2024-2025",
     description: "",
+    recurrence_type: "monthly" as 'monthly' | 'annually' | 'one_time',
+    due_date: "",
   });
 
   const handleSignOut = async () => {
@@ -127,9 +130,10 @@ const AdminDashboard = () => {
       section: studentForm.section || null,
       roll_number: studentForm.roll_number || null,
       parent_email: studentForm.parent_email || null,
+      transport_charge: studentForm.transport_charge ? parseFloat(studentForm.transport_charge) : 0,
     });
     
-    setStudentForm({ first_name: "", last_name: "", class: "", section: "", roll_number: "", parent_email: "" });
+    setStudentForm({ first_name: "", last_name: "", class: "", section: "", roll_number: "", parent_email: "", transport_charge: "" });
     setAddStudentOpen(false);
   };
 
@@ -159,9 +163,11 @@ const AdminDashboard = () => {
       amount: parseFloat(feeForm.amount),
       academic_year: feeForm.academic_year,
       description: feeForm.description || null,
+      recurrence_type: feeForm.recurrence_type,
+      due_date: feeForm.due_date || null,
     });
     
-    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "" });
+    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "" });
     setAddFeeOpen(false);
   };
 

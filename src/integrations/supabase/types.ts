@@ -25,6 +25,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          recurrence_type: string
           school_id: string
           updated_at: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          recurrence_type?: string
           school_id: string
           updated_at?: string
         }
@@ -51,6 +53,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          recurrence_type?: string
           school_id?: string
           updated_at?: string
         }
@@ -318,6 +321,7 @@ export type Database = {
           roll_number: string | null
           school_id: string
           section: string | null
+          transport_charge: number | null
           updated_at: string
         }
         Insert: {
@@ -332,6 +336,7 @@ export type Database = {
           roll_number?: string | null
           school_id: string
           section?: string | null
+          transport_charge?: number | null
           updated_at?: string
         }
         Update: {
@@ -346,6 +351,7 @@ export type Database = {
           roll_number?: string | null
           school_id?: string
           section?: string | null
+          transport_charge?: number | null
           updated_at?: string
         }
         Relationships: [
