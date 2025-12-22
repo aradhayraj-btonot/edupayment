@@ -176,6 +176,7 @@ export const useVerifyPayment = () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['parent-payments'] });
       queryClient.invalidateQueries({ queryKey: ['student-fees'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
       toast.success(data.action === 'approve' ? 'Payment verified successfully' : 'Payment rejected');
     },
     onError: (error: Error) => {
