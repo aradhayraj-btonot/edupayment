@@ -24,6 +24,7 @@ export interface StudentFee {
   amount: number;
   discount: number;
   due_date: string;
+  status: 'pending' | 'paid';
   created_at: string;
   fee_structures?: FeeStructure;
   students?: {
@@ -66,6 +67,7 @@ export const useStudentFees = (studentId?: string) => {
             class
           )
         `)
+        .eq('status', 'pending')
         .order('due_date', { ascending: true });
       
       if (studentId) {

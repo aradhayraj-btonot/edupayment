@@ -170,6 +170,17 @@ export const useVerifyPayment = () => {
       
       if (error) throw error;
       if (!data) throw new Error('Payment not found');
+      
+      // If approved, mark the student_fee as paid
+      if (action === 'approve' && data.student_fee_id) {
+        const { error: feeError } = await supabase
+          .from('student_fees')
+          .update({ status: 'paid' } as any)
+          .eq('id', data.student_fee_id);
+        
+        if (feeError) console.error('Failed to update fee status:', feeError);
+      }
+      
       return { payment: data, action };
     },
     onSuccess: (data) => {
