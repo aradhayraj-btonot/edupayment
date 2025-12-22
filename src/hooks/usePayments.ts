@@ -166,9 +166,10 @@ export const useVerifyPayment = () => {
             school_id
           )
         `)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
+      if (!data) throw new Error('Payment not found');
       return { payment: data, action };
     },
     onSuccess: (data) => {
