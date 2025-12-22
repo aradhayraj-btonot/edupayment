@@ -123,19 +123,16 @@ export const useUploadScreenshot = () => {
       
       if (uploadError) throw uploadError;
       
-      const { data: { publicUrl } } = supabase.storage
-        .from('payment-screenshots')
-        .getPublicUrl(fileName);
-      
-      // Update payment with screenshot URL
+      // Store the file path instead of public URL since bucket is now private
+      // We'll generate signed URLs when displaying
       const { error: updateError } = await supabase
         .from('payments')
-        .update({ screenshot_url: publicUrl } as any)
+        .update({ screenshot_url: fileName } as any)
         .eq('id', paymentId);
       
       if (updateError) throw updateError;
       
-      return publicUrl;
+      return fileName;
     },
     onSuccess: () => {
       toast.success('Screenshot uploaded successfully');
@@ -144,6 +141,34 @@ export const useUploadScreenshot = () => {
       toast.error('Failed to upload screenshot: ' + error.message);
     },
   });
+};
+
+// Helper function to get signed URL for screenshot
+export const getScreenshotSignedUrl = async (filePath: string): Promise<string | null> => {
+  if (!filePath) return null;
+  
+  // If it's already a full URL (legacy data), return as-is but it won't work
+  if (filePath.startsWith('http')) {
+    // Try to extract the file path from the URL
+    const match = filePath.match(/payment-screenshots\/(.+)$/);
+    if (match) {
+      const extractedPath = match[1];
+      const { data, error } = await supabase.storage
+        .from('payment-screenshots')
+        .createSignedUrl(extractedPath, 3600); // 1 hour expiry
+      
+      if (error || !data) return null;
+      return data.signedUrl;
+    }
+    return null;
+  }
+  
+  const { data, error } = await supabase.storage
+    .from('payment-screenshots')
+    .createSignedUrl(filePath, 3600); // 1 hour expiry
+  
+  if (error || !data) return null;
+  return data.signedUrl;
 };
 
 export const useVerifyPayment = () => {
