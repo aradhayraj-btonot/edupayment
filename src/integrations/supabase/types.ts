@@ -274,6 +274,7 @@ export type Database = {
           due_date: string
           fee_structure_id: string
           id: string
+          status: string
           student_id: string
         }
         Insert: {
@@ -283,6 +284,7 @@ export type Database = {
           due_date: string
           fee_structure_id: string
           id?: string
+          status?: string
           student_id: string
         }
         Update: {
@@ -292,6 +294,7 @@ export type Database = {
           due_date?: string
           fee_structure_id?: string
           id?: string
+          status?: string
           student_id?: string
         }
         Relationships: [
