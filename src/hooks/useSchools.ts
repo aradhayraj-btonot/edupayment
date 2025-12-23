@@ -62,3 +62,56 @@ export const useCreateSchool = () => {
     },
   });
 };
+
+export const useUpdateSchool = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<School> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('schools')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schools'] });
+      toast.success('School updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useUploadSchoolQRCode = () => {
+  return useMutation({
+    mutationFn: async ({ file, schoolId }: { file: File; schoolId: string }) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${schoolId}/qr-code-${Date.now()}.${fileExt}`;
+      
+      // First check if bucket exists, if not this will fail gracefully
+      const { error: uploadError } = await supabase.storage
+        .from('school-assets')
+        .upload(fileName, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('school-assets')
+        .getPublicUrl(fileName);
+      
+      return publicUrl;
+    },
+    onSuccess: () => {
+      toast.success('QR code uploaded successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to upload QR code: ' + error.message);
+    },
+  });
+};
