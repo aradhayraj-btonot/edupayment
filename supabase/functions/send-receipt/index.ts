@@ -2,7 +2,23 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const RESEND_FROM = Deno.env.get("RESEND_FROM") || "EduPay <onboarding@resend.dev>";
+
+function normalizeFrom(raw: string | null | undefined) {
+  const fallback = "Btonot <onboarding@resend.dev>";
+  const v = (raw ?? "").trim();
+  if (!v) return fallback;
+
+  // Valid formats per Resend: email@example.com OR Name <email@example.com>
+  const emailOnly = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const nameEmail = /^.+<[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+
+  if (emailOnly.test(v) || nameEmail.test(v)) return v;
+
+  console.log(`Invalid RESEND_FROM value "${v}", using fallback: ${fallback}`);
+  return fallback;
+}
+
+const RESEND_FROM = normalizeFrom(Deno.env.get("RESEND_FROM"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
