@@ -23,6 +23,9 @@ import {
   X,
   Upload,
   Image,
+  Moon,
+  Sun,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +45,9 @@ import {
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { downloadReceipt, ReceiptData } from "@/lib/generateReceipt";
+import { supabase } from "@/integrations/supabase/client";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
@@ -533,6 +539,19 @@ const ParentDashboard = () => {
                               variant="ghost"
                               size="sm"
                               className="h-6 px-2 text-xs gap-1"
+                              onClick={() => {
+                                const receiptData: ReceiptData = {
+                                  paymentId: payment.id,
+                                  studentName: `${payment.students?.first_name || ''} ${payment.students?.last_name || ''}`,
+                                  studentClass: payment.students?.class || '',
+                                  schoolName: studentSchool?.name || 'School',
+                                  amount: Number(payment.amount),
+                                  paymentDate: payment.payment_date || payment.created_at,
+                                  paymentMethod: payment.payment_method,
+                                  transactionId: payment.transaction_id || undefined,
+                                };
+                                downloadReceipt(receiptData);
+                              }}
                             >
                               <Download className="w-3 h-3" />
                               Receipt
@@ -616,7 +635,7 @@ const ParentDashboard = () => {
                         key={payment.id}
                         className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
                       >
-                        <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                             payment.status === 'completed' ? 'bg-success/10' : 'bg-warning/10'
                           }`}>
@@ -635,13 +654,38 @@ const ParentDashboard = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-foreground">
-                            ₹{Number(payment.amount).toLocaleString('en-IN')}
-                          </p>
-                          <Badge variant={payment.status === 'completed' ? 'default' : 'secondary'}>
-                            {payment.status}
-                          </Badge>
+                        <div className="text-right flex items-center gap-3">
+                          <div>
+                            <p className="font-semibold text-foreground">
+                              ₹{Number(payment.amount).toLocaleString('en-IN')}
+                            </p>
+                            <Badge variant={payment.status === 'completed' ? 'default' : 'secondary'}>
+                              {payment.status}
+                            </Badge>
+                          </div>
+                          {payment.status === 'completed' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => {
+                                const receiptData: ReceiptData = {
+                                  paymentId: payment.id,
+                                  studentName: `${payment.students?.first_name || ''} ${payment.students?.last_name || ''}`,
+                                  studentClass: payment.students?.class || '',
+                                  schoolName: studentSchool?.name || 'School',
+                                  amount: Number(payment.amount),
+                                  paymentDate: payment.payment_date || payment.created_at,
+                                  paymentMethod: payment.payment_method,
+                                  transactionId: payment.transaction_id || undefined,
+                                };
+                                downloadReceipt(receiptData);
+                              }}
+                            >
+                              <Download className="w-3 h-3" />
+                              Receipt
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -842,14 +886,110 @@ const ParentDashboard = () => {
           )}
 
           {activeTab === "settings" && (
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center text-muted-foreground">
-                  <p className="text-lg font-medium mb-2">Coming Soon</p>
-                  <p>This feature is under development.</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Theme Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <Sun className="w-5 h-5" />
+                    Appearance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">Dark Mode</p>
+                      <p className="text-sm text-muted-foreground">
+                        Switch between light and dark themes
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sun className="w-4 h-4 text-muted-foreground" />
+                      <Switch
+                        checked={document.documentElement.classList.contains('dark')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            document.documentElement.classList.add('dark');
+                            localStorage.setItem('theme', 'dark');
+                          } else {
+                            document.documentElement.classList.remove('dark');
+                            localStorage.setItem('theme', 'light');
+                          }
+                        }}
+                      />
+                      <Moon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Account Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <Lock className="w-5 h-5" />
+                    Account Security
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground">Email</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground">Password</p>
+                      <p className="text-sm text-muted-foreground">••••••••</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={async () => {
+                        const { error } = await supabase.auth.resetPasswordForEmail(user?.email || '', {
+                          redirectTo: `${window.location.origin}/login`,
+                        });
+                        if (error) {
+                          toast.error(error.message);
+                        } else {
+                          toast.success('Password reset email sent! Check your inbox.');
+                        }
+                      }}
+                    >
+                      Change Password
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Contact Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <Phone className="w-5 h-5" />
+                    Support
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="p-4 bg-secondary/50 rounded-lg">
+                      <p className="font-medium text-foreground mb-1">Need Help?</p>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Contact your school administration for any fee-related queries.
+                      </p>
+                      {studentSchool && (
+                        <div className="space-y-1 text-sm">
+                          <p><strong>School:</strong> {studentSchool.name}</p>
+                          {studentSchool.email && <p><strong>Email:</strong> {studentSchool.email}</p>}
+                          {studentSchool.phone && <p><strong>Phone:</strong> {studentSchool.phone}</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </main>
