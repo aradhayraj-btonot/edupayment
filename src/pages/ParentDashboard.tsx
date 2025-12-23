@@ -1034,6 +1034,32 @@ const ParentDashboard = () => {
                     <p className="text-sm text-muted-foreground">Scan with any UPI app</p>
                   </div>
 
+                  {/* Download App Button */}
+                  <div className="flex flex-col items-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium text-foreground">Download EduPay App</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => window.open('https://play.google.com/store/apps/details?id=app.edupay', '_blank')}
+                      >
+                        <Download className="w-4 h-4" />
+                        Android
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => window.open('https://apps.apple.com/app/edupay', '_blank')}
+                      >
+                        <Download className="w-4 h-4" />
+                        iOS
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Pay faster with our mobile app</p>
+                  </div>
+
                   {/* UPI ID */}
                   {studentSchool.upi_id && (
                     <div>
