@@ -7,7 +7,7 @@ const Pricing = () => {
   const plans = [
     {
       name: "Starter",
-      price: "₹2,999",
+      price: "999",
       period: "/month",
       description: "Perfect for small schools up to 500 students",
       features: [
