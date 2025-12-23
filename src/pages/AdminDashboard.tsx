@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   GraduationCap,
   Home,
@@ -41,13 +52,20 @@ import {
   X,
   Plus,
   Building,
+  Edit,
+  Trash2,
+  Moon,
+  Sun,
+  Lock,
+  QrCode,
+  Upload,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useStudents, useCreateStudent } from "@/hooks/useStudents";
+import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/useStudents";
 import { usePayments, usePaymentStats, usePendingPayments, useVerifyPayment } from "@/hooks/usePayments";
-import { useSchools, useCreateSchool } from "@/hooks/useSchools";
-import { useFeeStructures, useCreateFeeStructure } from "@/hooks/useFees";
+import { useSchools, useCreateSchool, useUpdateSchool } from "@/hooks/useSchools";
+import { useFeeStructures, useCreateFeeStructure, useUpdateFeeStructure, useDeleteFeeStructure } from "@/hooks/useFees";
 import { useSchoolNotifications, useSendNotification, useSendReceipt } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +73,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, ShieldCheck, Eye, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -84,14 +105,27 @@ const AdminDashboard = () => {
 
   // Mutations
   const createStudent = useCreateStudent();
+  const updateStudent = useUpdateStudent();
+  const deleteStudent = useDeleteStudent();
   const createSchool = useCreateSchool();
+  const updateSchool = useUpdateSchool();
   const createFee = useCreateFeeStructure();
+  const updateFee = useUpdateFeeStructure();
+  const deleteFee = useDeleteFeeStructure();
   const sendNotification = useSendNotification();
   const sendReceipt = useSendReceipt();
   const verifyPayment = useVerifyPayment();
 
   // Screenshot preview state
   const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
+
+  // Edit states
+  const [editStudentOpen, setEditStudentOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [editFeeOpen, setEditFeeOpen] = useState(false);
+  const [editingFee, setEditingFee] = useState<any>(null);
+  const [settingsTab, setSettingsTab] = useState<'school' | 'account' | 'appearance'>('school');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form states
   const [studentForm, setStudentForm] = useState({
@@ -770,9 +804,54 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                         </div>
-                        <Badge variant={student.parent_id ? "default" : "secondary"}>
-                          {student.parent_id ? "Linked" : "Pending"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={student.parent_id ? "default" : "secondary"}>
+                            {student.parent_id ? "Linked" : "Pending"}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              setEditingStudent(student);
+                              setStudentForm({
+                                first_name: student.first_name,
+                                last_name: student.last_name,
+                                class: student.class,
+                                section: student.section || '',
+                                roll_number: student.roll_number || '',
+                                parent_email: student.parent_email || '',
+                                transport_charge: student.transport_charge?.toString() || '',
+                              });
+                              setEditStudentOpen(true);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Student</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete {student.first_name} {student.last_name}? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteStudent.mutate(student.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1111,18 +1190,63 @@ const AdminDashboard = () => {
                             {(fee as any).recurrence_type === 'one_time' && ' • One-time'}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-foreground">
-                            ₹{Number(fee.amount).toLocaleString('en-IN')}
-                          </p>
-                          <div className="flex gap-1 justify-end mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {(fee as any).recurrence_type === 'monthly' ? 'Monthly' : (fee as any).recurrence_type === 'annually' ? 'Annually' : 'One-time'}
-                            </Badge>
-                            <Badge variant={fee.is_active ? "default" : "secondary"}>
-                              {fee.is_active ? "Active" : "Inactive"}
-                            </Badge>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground">
+                              ₹{Number(fee.amount).toLocaleString('en-IN')}
+                            </p>
+                            <div className="flex gap-1 justify-end mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {(fee as any).recurrence_type === 'monthly' ? 'Monthly' : (fee as any).recurrence_type === 'annually' ? 'Annually' : 'One-time'}
+                              </Badge>
+                              <Badge variant={fee.is_active ? "default" : "secondary"}>
+                                {fee.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
                           </div>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              setEditingFee(fee);
+                              setFeeForm({
+                                name: fee.name,
+                                fee_type: fee.fee_type,
+                                amount: fee.amount.toString(),
+                                academic_year: fee.academic_year,
+                                description: fee.description || '',
+                                recurrence_type: (fee as any).recurrence_type || 'monthly',
+                                due_date: fee.due_date || '',
+                              });
+                              setEditFeeOpen(true);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Fee Structure</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{fee.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteFee.mutate(fee.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     ))}
@@ -1249,14 +1373,283 @@ const AdminDashboard = () => {
           )}
 
           {activeTab === "settings" && (
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center text-muted-foreground">
-                  <p className="text-lg font-medium mb-2">Coming Soon</p>
-                  <p>This feature is under development.</p>
+            <div className="space-y-6">
+              {/* Tab Navigation */}
+              <div className="flex gap-2 border-b border-border pb-4">
+                <Button 
+                  variant={settingsTab === 'school' ? 'default' : 'outline'}
+                  onClick={() => setSettingsTab('school')}
+                  className="gap-2"
+                >
+                  <Building className="w-4 h-4" />
+                  School Settings
+                </Button>
+                <Button 
+                  variant={settingsTab === 'account' ? 'default' : 'outline'}
+                  onClick={() => setSettingsTab('account')}
+                  className="gap-2"
+                >
+                  <Lock className="w-4 h-4" />
+                  Account
+                </Button>
+                <Button 
+                  variant={settingsTab === 'appearance' ? 'default' : 'outline'}
+                  onClick={() => setSettingsTab('appearance')}
+                  className="gap-2"
+                >
+                  <Sun className="w-4 h-4" />
+                  Appearance
+                </Button>
+              </div>
+
+              {settingsTab === 'school' && selectedSchool && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* UPI Settings */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg font-display flex items-center gap-2">
+                        <IndianRupee className="w-5 h-5" />
+                        Payment Settings
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="upi-id">UPI ID</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            id="upi-id"
+                            placeholder="school@upi"
+                            defaultValue={selectedSchool.upi_id || ''}
+                            onBlur={(e) => {
+                              if (e.target.value !== selectedSchool.upi_id) {
+                                updateSchool.mutate({ id: selectedSchool.id, upi_id: e.target.value });
+                              }
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Parents will use this UPI ID for payments
+                        </p>
+                      </div>
+                      <div>
+                        <Label>QR Code</Label>
+                        <div className="mt-2">
+                          {selectedSchool.upi_qr_code_url ? (
+                            <div className="flex items-center gap-4">
+                              <img 
+                                src={selectedSchool.upi_qr_code_url} 
+                                alt="UPI QR Code" 
+                                className="w-32 h-32 rounded-lg border"
+                              />
+                              <div className="space-y-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => fileInputRef.current?.click()}
+                                >
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  Change QR Code
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
+                              <QrCode className="w-12 h-12 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground mb-3">No QR code uploaded</p>
+                              <Button 
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload QR Code
+                              </Button>
+                            </div>
+                          )}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = async () => {
+                                  // For simplicity, we'll use a data URL
+                                  // In production, you'd upload to storage
+                                  await updateSchool.mutateAsync({ 
+                                    id: selectedSchool.id, 
+                                    upi_qr_code_url: reader.result as string 
+                                  });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* School Info */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg font-display flex items-center gap-2">
+                        <Building className="w-5 h-5" />
+                        School Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="school-name">School Name</Label>
+                        <Input
+                          id="school-name"
+                          defaultValue={selectedSchool.name}
+                          onBlur={(e) => {
+                            if (e.target.value !== selectedSchool.name) {
+                              updateSchool.mutate({ id: selectedSchool.id, name: e.target.value });
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="school-email">Email</Label>
+                        <Input
+                          id="school-email"
+                          type="email"
+                          defaultValue={selectedSchool.email || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== selectedSchool.email) {
+                              updateSchool.mutate({ id: selectedSchool.id, email: e.target.value });
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="school-phone">Phone</Label>
+                        <Input
+                          id="school-phone"
+                          defaultValue={selectedSchool.phone || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== selectedSchool.phone) {
+                              updateSchool.mutate({ id: selectedSchool.id, phone: e.target.value });
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="school-address">Address</Label>
+                        <Textarea
+                          id="school-address"
+                          defaultValue={selectedSchool.address || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== selectedSchool.address) {
+                              updateSchool.mutate({ id: selectedSchool.id, address: e.target.value });
+                            }
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+
+              {settingsTab === 'account' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-display flex items-center gap-2">
+                      <Lock className="w-5 h-5" />
+                      Account Security
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-foreground">Email</p>
+                        <p className="text-sm text-muted-foreground">{user?.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-foreground">Password</p>
+                        <p className="text-sm text-muted-foreground">••••••••</p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          const { error } = await supabase.auth.resetPasswordForEmail(user?.email || '', {
+                            redirectTo: `${window.location.origin}/login`,
+                          });
+                          if (error) {
+                            toast.error(error.message);
+                          } else {
+                            toast.success('Password reset email sent! Check your inbox.');
+                          }
+                        }}
+                      >
+                        Change Password
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-foreground">Role</p>
+                        <p className="text-sm text-muted-foreground capitalize">{role}</p>
+                      </div>
+                      <Badge variant="default">Active</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {settingsTab === 'appearance' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-display flex items-center gap-2">
+                      <Sun className="w-5 h-5" />
+                      Appearance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-foreground">Dark Mode</p>
+                        <p className="text-sm text-muted-foreground">
+                          Switch between light and dark themes
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Sun className="w-4 h-4 text-muted-foreground" />
+                        <Switch
+                          checked={document.documentElement.classList.contains('dark')}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              document.documentElement.classList.add('dark');
+                              localStorage.setItem('theme', 'dark');
+                            } else {
+                              document.documentElement.classList.remove('dark');
+                              localStorage.setItem('theme', 'light');
+                            }
+                          }}
+                        />
+                        <Moon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {!selectedSchool && settingsTab === 'school' && (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center text-muted-foreground">
+                      <p className="text-lg font-medium mb-2">No School Found</p>
+                      <p>Please add a school first to manage settings.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </div>
       </main>
@@ -1274,6 +1667,192 @@ const AdminDashboard = () => {
               className="w-full rounded-lg"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={editStudentOpen} onOpenChange={setEditStudentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!editingStudent) return;
+            
+            await updateStudent.mutateAsync({
+              id: editingStudent.id,
+              first_name: studentForm.first_name,
+              last_name: studentForm.last_name,
+              class: studentForm.class,
+              section: studentForm.section || null,
+              roll_number: studentForm.roll_number || null,
+              parent_email: studentForm.parent_email || null,
+              transport_charge: studentForm.transport_charge ? parseFloat(studentForm.transport_charge) : 0,
+            });
+            
+            setEditStudentOpen(false);
+            setEditingStudent(null);
+            setStudentForm({ first_name: "", last_name: "", class: "", section: "", roll_number: "", parent_email: "", transport_charge: "" });
+          }} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-first-name">First Name *</Label>
+                <Input
+                  id="edit-first-name"
+                  value={studentForm.first_name}
+                  onChange={(e) => setStudentForm({ ...studentForm, first_name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-last-name">Last Name *</Label>
+                <Input
+                  id="edit-last-name"
+                  value={studentForm.last_name}
+                  onChange={(e) => setStudentForm({ ...studentForm, last_name: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-class">Class *</Label>
+                <Input
+                  id="edit-class"
+                  value={studentForm.class}
+                  onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-section">Section</Label>
+                <Input
+                  id="edit-section"
+                  value={studentForm.section}
+                  onChange={(e) => setStudentForm({ ...studentForm, section: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-roll-number">Roll Number</Label>
+              <Input
+                id="edit-roll-number"
+                value={studentForm.roll_number}
+                onChange={(e) => setStudentForm({ ...studentForm, roll_number: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-transport-charge">Transport Charge (₹/month)</Label>
+              <Input
+                id="edit-transport-charge"
+                type="number"
+                value={studentForm.transport_charge}
+                onChange={(e) => setStudentForm({ ...studentForm, transport_charge: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-parent-email">Parent Email</Label>
+              <Input
+                id="edit-parent-email"
+                type="email"
+                value={studentForm.parent_email}
+                onChange={(e) => setStudentForm({ ...studentForm, parent_email: e.target.value })}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={updateStudent.isPending}>
+              {updateStudent.isPending ? "Updating..." : "Update Student"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Fee Dialog */}
+      <Dialog open={editFeeOpen} onOpenChange={setEditFeeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Fee Structure</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!editingFee) return;
+            
+            await updateFee.mutateAsync({
+              id: editingFee.id,
+              name: feeForm.name,
+              fee_type: feeForm.fee_type,
+              amount: parseFloat(feeForm.amount),
+              academic_year: feeForm.academic_year,
+              description: feeForm.description || null,
+              recurrence_type: feeForm.recurrence_type as any,
+              due_date: feeForm.due_date || null,
+            });
+            
+            setEditFeeOpen(false);
+            setEditingFee(null);
+            setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "" });
+          }} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-fee-name">Fee Name *</Label>
+              <Input
+                id="edit-fee-name"
+                value={feeForm.name}
+                onChange={(e) => setFeeForm({ ...feeForm, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-fee-type">Fee Type *</Label>
+              <Select
+                value={feeForm.fee_type}
+                onValueChange={(value: any) => setFeeForm({ ...feeForm, fee_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select fee type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tuition">Tuition</SelectItem>
+                  <SelectItem value="transport">Transport</SelectItem>
+                  <SelectItem value="annually">Annual Fee</SelectItem>
+                  <SelectItem value="activities">Activities</SelectItem>
+                  <SelectItem value="library">Library</SelectItem>
+                  <SelectItem value="laboratory">Laboratory</SelectItem>
+                  <SelectItem value="sports">Sports</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit-fee-amount">Amount (₹) *</Label>
+              <Input
+                id="edit-fee-amount"
+                type="number"
+                value={feeForm.amount}
+                onChange={(e) => setFeeForm({ ...feeForm, amount: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-academic-year">Academic Year *</Label>
+              <Input
+                id="edit-academic-year"
+                value={feeForm.academic_year}
+                onChange={(e) => setFeeForm({ ...feeForm, academic_year: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-fee-description">Description</Label>
+              <Input
+                id="edit-fee-description"
+                value={feeForm.description}
+                onChange={(e) => setFeeForm({ ...feeForm, description: e.target.value })}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={updateFee.isPending}>
+              {updateFee.isPending ? "Updating..." : "Update Fee Structure"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
