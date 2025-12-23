@@ -65,13 +65,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/useStudents";
 import { usePayments, usePaymentStats, usePendingPayments, useVerifyPayment } from "@/hooks/usePayments";
 import { useSchools, useCreateSchool, useUpdateSchool } from "@/hooks/useSchools";
-import { useFeeStructures, useCreateFeeStructure, useUpdateFeeStructure, useDeleteFeeStructure } from "@/hooks/useFees";
+import { useFeeStructures, useCreateFeeStructure, useUpdateFeeStructure, useDeleteFeeStructure, useAllStudentFees } from "@/hooks/useFees";
 import { useSchoolNotifications, useSendNotification, useSendReceipt } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, ShieldCheck, Eye, XCircle } from "lucide-react";
+import { CalendarIcon, ShieldCheck, Eye, XCircle, Calculator, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,6 +102,7 @@ const AdminDashboard = () => {
   const { data: feeStructures = [] } = useFeeStructures(selectedSchool?.id);
   const { data: notifications = [], isLoading: notificationsLoading } = useSchoolNotifications(selectedSchool?.id);
   const { data: pendingPayments = [], isLoading: pendingPaymentsLoading } = usePendingPayments();
+  const { data: allStudentFees = [], isLoading: allStudentFeesLoading } = useAllStudentFees(selectedSchool?.id);
 
   // Mutations
   const createStudent = useCreateStudent();
@@ -268,6 +269,7 @@ const AdminDashboard = () => {
 
   const navItems = [
     { icon: Home, label: "Dashboard", key: "dashboard" },
+    { icon: Calculator, label: "Totals", key: "totals" },
     { icon: ShieldCheck, label: "Verify Payments", key: "verify" },
     { icon: Building, label: "Schools", key: "schools" },
     { icon: Users, label: "Students", key: "students" },
@@ -381,17 +383,29 @@ const AdminDashboard = () => {
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {activeTab === "dashboard" && "Welcome back! Here's your school's financial overview."}
+                  {activeTab === "totals" && "View detailed fee totals and student-wise breakdown"}
                   {activeTab === "verify" && `${pendingPayments.length} payments awaiting verification`}
                   {activeTab === "students" && `${students.length} students enrolled`}
                   {activeTab === "payments" && `${payments.length} total payments`}
                   {activeTab === "schools" && `${schools.length} schools registered`}
                   {activeTab === "fees" && `${feeStructures.length} fee structures`}
+                  {activeTab === "notifications" && `${notifications.length} notifications`}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="relative">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="relative"
+                onClick={() => setActiveTab("notifications")}
+              >
                 <Bell className="w-4 h-4" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                    {notifications.length > 9 ? '9+' : notifications.length}
+                  </span>
+                )}
               </Button>
               <Button variant="default" className="gap-2">
                 <Download className="w-4 h-4" />
@@ -455,7 +469,124 @@ const AdminDashboard = () => {
                   </motion.div>
                 ))}
               </div>
+            </>
+          )}
 
+          {activeTab === "totals" && (
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground mb-1">Total Fees Assigned</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      ₹{allStudentFees.reduce((sum, f) => sum + Number(f.amount), 0).toLocaleString('en-IN')}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground mb-1">Total Paid</p>
+                    <p className="text-2xl font-bold text-success">
+                      ₹{allStudentFees.filter(f => f.status === 'paid').reduce((sum, f) => sum + Number(f.amount), 0).toLocaleString('en-IN')}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground mb-1">Total Pending</p>
+                    <p className="text-2xl font-bold text-warning">
+                      ₹{allStudentFees.filter(f => f.status === 'pending').reduce((sum, f) => sum + Number(f.amount) - Number(f.discount || 0), 0).toLocaleString('en-IN')}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground mb-1">Total Discounts</p>
+                    <p className="text-2xl font-bold text-info">
+                      ₹{allStudentFees.reduce((sum, f) => sum + Number(f.discount || 0), 0).toLocaleString('en-IN')}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Student-wise Fee Breakdown */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <Calculator className="w-5 h-5" />
+                    Student-wise Fee Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {allStudentFeesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : allStudentFees.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No fee assignments found.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Student</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Class</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Fee Type</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Discount</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Net Amount</th>
+                            <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allStudentFees.slice(0, 50).map((fee) => (
+                            <tr key={fee.id} className="border-b border-border/50 hover:bg-secondary/30">
+                              <td className="py-3 px-4">
+                                <p className="font-medium text-foreground">
+                                  {fee.students?.first_name} {fee.students?.last_name}
+                                </p>
+                              </td>
+                              <td className="py-3 px-4 text-muted-foreground">
+                                {fee.students?.class}
+                              </td>
+                              <td className="py-3 px-4 text-muted-foreground">
+                                {fee.fee_structures?.name || 'N/A'}
+                              </td>
+                              <td className="py-3 px-4 text-right text-foreground">
+                                ₹{Number(fee.amount).toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-3 px-4 text-right text-info">
+                                ₹{Number(fee.discount || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-3 px-4 text-right font-medium text-foreground">
+                                ₹{(Number(fee.amount) - Number(fee.discount || 0)).toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <Badge variant={fee.status === 'paid' ? 'default' : 'secondary'}>
+                                  {fee.status}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {allStudentFees.length > 50 && (
+                        <p className="text-center text-sm text-muted-foreground py-4">
+                          Showing first 50 of {allStudentFees.length} records
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "dashboard" && (
+            <>
               {/* Recent Payments */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">

@@ -82,6 +82,38 @@ export const useStudentFees = (studentId?: string) => {
   });
 };
 
+export const useAllStudentFees = (schoolId?: string) => {
+  return useQuery({
+    queryKey: ['all-student-fees', schoolId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_fees')
+        .select(`
+          *,
+          fee_structures (*),
+          students (
+            id,
+            first_name,
+            last_name,
+            class,
+            section,
+            school_id
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Filter by school if provided
+      if (schoolId) {
+        return data.filter((sf: any) => sf.students?.school_id === schoolId) as StudentFee[];
+      }
+      
+      return data as StudentFee[];
+    },
+  });
+};
+
 export interface CreateFeeStructureData {
   school_id: string;
   name: string;

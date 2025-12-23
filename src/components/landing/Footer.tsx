@@ -10,7 +10,7 @@ const Footer = () => {
       { name: "API Docs", href: "#" },
     ],
     company: [
-      { name: "About Us", href: "#about" },
+      { name: "About Us", href: "/about" },
       { name: "Careers", href: "#" },
       { name: "Blog", href: "#" },
       { name: "Contact", href: "#contact" },
@@ -116,7 +116,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-primary-foreground/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-primary-foreground/50 text-sm">
-            © 2024 EduPay. All rights reserved.
+            © 2024 EduPay by <span className="text-primary-foreground/70 font-medium">Btonot</span>. Created by <span className="text-primary-foreground/70 font-medium">Aradhay Raj</span>. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <span className="text-primary-foreground/50 text-sm">
