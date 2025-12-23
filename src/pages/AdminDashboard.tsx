@@ -48,7 +48,7 @@ import { useStudents, useCreateStudent } from "@/hooks/useStudents";
 import { usePayments, usePaymentStats, usePendingPayments, useVerifyPayment } from "@/hooks/usePayments";
 import { useSchools, useCreateSchool } from "@/hooks/useSchools";
 import { useFeeStructures, useCreateFeeStructure } from "@/hooks/useFees";
-import { useSchoolNotifications, useSendNotification } from "@/hooks/useNotifications";
+import { useSchoolNotifications, useSendNotification, useSendReceipt } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -87,6 +87,7 @@ const AdminDashboard = () => {
   const createSchool = useCreateSchool();
   const createFee = useCreateFeeStructure();
   const sendNotification = useSendNotification();
+  const sendReceipt = useSendReceipt();
   const verifyPayment = useVerifyPayment();
 
   // Screenshot preview state
@@ -928,17 +929,10 @@ const AdminDashboard = () => {
                             className="flex-1 gap-2"
                             onClick={async () => {
                               await verifyPayment.mutateAsync({ paymentId: payment.id, action: 'approve' });
-                              // Send receipt notification
-                              if (selectedSchool && payment.students) {
-                                await sendNotification.mutateAsync({
-                                  school_id: payment.students.school_id,
-                                  title: "Payment Receipt - Verified",
-                                  message: `Your payment of ₹${Number(payment.amount).toLocaleString('en-IN')} for ${payment.students.first_name} ${payment.students.last_name} has been verified. Thank you for your payment!`,
-                                  type: "success",
-                                });
-                              }
+                              // Send receipt email directly to parent
+                              await sendReceipt.mutateAsync(payment.id);
                             }}
-                            disabled={verifyPayment.isPending}
+                            disabled={verifyPayment.isPending || sendReceipt.isPending}
                           >
                             <CheckCircle className="w-4 h-4" />
                             Approve & Send Receipt

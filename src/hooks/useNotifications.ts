@@ -146,3 +146,43 @@ export function useSendNotification() {
     },
   });
 }
+
+// Send receipt email (admin only)
+export function useSendReceipt() {
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (paymentId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const response = await supabase.functions.invoke("send-receipt", {
+        body: { payment_id: paymentId },
+      });
+
+      if (response.error) throw response.error;
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.email_sent) {
+        toast({
+          title: "Receipt sent!",
+          description: `Receipt emailed to ${data.parent_email}`,
+        });
+      } else {
+        toast({
+          title: "Receipt not sent",
+          description: "Could not send email to parent",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to send receipt",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}
