@@ -10,7 +10,7 @@ const Navbar = () => {
   const navLinks = [
     { name: "Features", href: "#features" },
     { name: "Pricing", href: "#pricing" },
-    { name: "About", href: "#about" },
+    { name: "About", href: "/about", isRoute: true },
     { name: "Contact", href: "#contact" },
   ];
 
@@ -31,13 +31,23 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-              >
-                {link.name}
-              </a>
+              link.isRoute ? (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  {link.name}
+                </Link>
+              ) : (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  {link.name}
+                </a>
+              )
             ))}
           </div>
 
@@ -75,14 +85,25 @@ const Navbar = () => {
             >
               <div className="py-4 space-y-4">
                 {navLinks.map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    className="block text-muted-foreground hover:text-foreground transition-colors font-medium"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {link.name}
-                  </a>
+                  link.isRoute ? (
+                    <Link
+                      key={link.name}
+                      to={link.href}
+                      className="block text-muted-foreground hover:text-foreground transition-colors font-medium"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.name}
+                    </Link>
+                  ) : (
+                    <a
+                      key={link.name}
+                      href={link.href}
+                      className="block text-muted-foreground hover:text-foreground transition-colors font-medium"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.name}
+                    </a>
+                  )
                 ))}
                 <div className="pt-4 border-t border-border space-y-2">
                   <Link to="/login" className="block">
