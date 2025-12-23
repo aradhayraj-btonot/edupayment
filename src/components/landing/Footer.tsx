@@ -41,22 +41,22 @@ const Footer = () => {
             </p>
             <div className="space-y-3">
               <a
-                href="mailto:hello@edupay.com"
+                href="mailto:aradhayrajbusiness@gmail.com"
                 className="flex items-center gap-3 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
               >
                 <Mail className="w-5 h-5" />
-                hello@edupay.com
+                aradhayrajbusiness@gmail.com
               </a>
               <a
-                href="tel:+911234567890"
+                href="tel:+919708565215"
                 className="flex items-center gap-3 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
               >
                 <Phone className="w-5 h-5" />
-                +91 1234 567 890
+                +91 9708565215
               </a>
               <p className="flex items-center gap-3 text-primary-foreground/70">
                 <MapPin className="w-5 h-5" />
-                Bangalore, India
+                Ramagarh, Jharkhand, India
               </p>
             </div>
           </div>
