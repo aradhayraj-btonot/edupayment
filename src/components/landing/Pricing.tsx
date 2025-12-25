@@ -14,7 +14,7 @@ const Pricing = () => {
         "Up to 500 students",
         "Basic fee management",
         "Email notifications",
-        "Payment gateway (2% fee)",
+        "Payment gateway free",
         "Basic reports",
         "Email support",
       ],
