@@ -227,6 +227,56 @@ export type Database = {
         }
         Relationships: []
       }
+      school_subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_payment_id: string | null
+          razorpay_subscription_id: string | null
+          school_id: string
+          starts_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          school_id: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          school_id?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_subscriptions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: true
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schools: {
         Row: {
           address: string | null
@@ -236,6 +286,7 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string | null
+          subscription_active: boolean | null
           updated_at: string
           upi_id: string | null
           upi_qr_code_url: string | null
@@ -248,6 +299,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           phone?: string | null
+          subscription_active?: boolean | null
           updated_at?: string
           upi_id?: string | null
           upi_qr_code_url?: string | null
@@ -260,6 +312,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          subscription_active?: boolean | null
           updated_at?: string
           upi_id?: string | null
           upi_qr_code_url?: string | null
@@ -370,6 +423,47 @@ export type Database = {
           },
         ]
       }
+      subscription_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payment_date: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          payment_date?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id: string
+          status?: string
+          subscription_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_date?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "school_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -403,6 +497,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_school_subscription_active: {
+        Args: { _school_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "parent" | "student"
@@ -416,6 +514,8 @@ export type Database = {
         | "other"
         | "annually"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      subscription_plan: "starter" | "professional" | "enterprise"
+      subscription_status: "active" | "expired" | "cancelled" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -555,6 +655,8 @@ export const Constants = {
         "annually",
       ],
       payment_status: ["pending", "completed", "failed", "refunded"],
+      subscription_plan: ["starter", "professional", "enterprise"],
+      subscription_status: ["active", "expired", "cancelled", "pending"],
     },
   },
 } as const

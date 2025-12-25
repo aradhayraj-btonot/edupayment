@@ -34,6 +34,7 @@ import { useParentPayments, useCreatePayment, useUploadScreenshot } from "@/hook
 import { useStudentFees } from "@/hooks/useFees";
 import { useSchools } from "@/hooks/useSchools";
 import { useParentNotifications, useNotificationReads, useMarkNotificationRead } from "@/hooks/useNotifications";
+import { useIsSubscriptionActive } from "@/hooks/useSubscription";
 import { format } from "date-fns";
 import { QrCode, Copy, ExternalLink } from "lucide-react";
 import {
@@ -48,6 +49,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { downloadReceipt, ReceiptData } from "@/lib/generateReceipt";
 import { supabase } from "@/integrations/supabase/client";
+import { SubscriptionBlocker } from "@/components/subscription/SubscriptionBlocker";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
@@ -82,6 +84,14 @@ const ParentDashboard = () => {
 
   // Get school details for payment info
   const studentSchool = schools.find(s => s.id === selectedStudent?.school_id);
+  
+  // Check subscription status
+  const { isActive: isSubscriptionActive, isLoading: subscriptionLoading } = useIsSubscriptionActive(selectedStudent?.school_id);
+
+  // Show blocker if subscription is expired
+  if (!subscriptionLoading && selectedStudent && !isSubscriptionActive) {
+    return <SubscriptionBlocker type="parent" schoolName={studentSchool?.name} />;
+  }
 
   const handleSignOut = async () => {
     await signOut();

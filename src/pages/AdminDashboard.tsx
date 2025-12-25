@@ -76,6 +76,8 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
+import { useIsSubscriptionActive } from "@/hooks/useSubscription";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -125,7 +127,7 @@ const AdminDashboard = () => {
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [editFeeOpen, setEditFeeOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<any>(null);
-  const [settingsTab, setSettingsTab] = useState<'school' | 'account' | 'appearance'>('school');
+  const [settingsTab, setSettingsTab] = useState<'school' | 'account' | 'appearance' | 'subscription'>('subscription');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form states
@@ -1506,7 +1508,15 @@ const AdminDashboard = () => {
           {activeTab === "settings" && (
             <div className="space-y-6">
               {/* Tab Navigation */}
-              <div className="flex gap-2 border-b border-border pb-4">
+              <div className="flex gap-2 border-b border-border pb-4 flex-wrap">
+                <Button 
+                  variant={settingsTab === 'subscription' ? 'default' : 'outline'}
+                  onClick={() => setSettingsTab('subscription')}
+                  className="gap-2"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Subscription
+                </Button>
                 <Button 
                   variant={settingsTab === 'school' ? 'default' : 'outline'}
                   onClick={() => setSettingsTab('school')}
@@ -1532,6 +1542,12 @@ const AdminDashboard = () => {
                   Appearance
                 </Button>
               </div>
+
+              {settingsTab === 'subscription' && selectedSchool && (
+                <div className="max-w-xl">
+                  <SubscriptionStatus schoolId={selectedSchool.id} />
+                </div>
+              )}
 
               {settingsTab === 'school' && selectedSchool && (
                 <div className="grid lg:grid-cols-2 gap-6">
