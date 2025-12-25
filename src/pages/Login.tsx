@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,8 +69,33 @@ const Login = () => {
     }
   };
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Login - EduPay School Fee Payment",
+    "description": "Sign in to EduPay by Aradhay Raj Btonot to manage school fee payments online.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Btonot",
+      "founder": {
+        "@type": "Person",
+        "name": "Aradhay Raj"
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <>
+      <Helmet>
+        <title>Login - EduPay School Fee Payment | Aradhay Raj Btonot</title>
+        <meta name="description" content="Sign in to EduPay by Aradhay Raj Btonot. Access your dashboard to pay school fees online with UPI, cards, and net banking." />
+        <meta name="keywords" content="EduPay login, school fee payment login, Aradhay Raj, Btonot, edu pay sign in" />
+        <link rel="canonical" href="https://edupay.com/login" />
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Helmet>
+      <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex gradient-hero relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -305,7 +331,8 @@ const Login = () => {
           </div>
         </motion.div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
