@@ -32,6 +32,11 @@ interface VerifyPaymentRequest {
 async function createRazorpayOrder(amount: number, schoolId: string, plan: string) {
   const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
   
+  // Receipt must be max 40 chars - use shorter format
+  const shortId = schoolId.substring(0, 8);
+  const timestamp = Date.now().toString(36); // Base36 for shorter string
+  const receipt = `sub_${shortId}_${timestamp}`.substring(0, 40);
+  
   const response = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
     headers: {
@@ -41,7 +46,7 @@ async function createRazorpayOrder(amount: number, schoolId: string, plan: strin
     body: JSON.stringify({
       amount: amount,
       currency: "INR",
-      receipt: `sub_${schoolId}_${Date.now()}`,
+      receipt: receipt,
       notes: {
         school_id: schoolId,
         plan: plan,
