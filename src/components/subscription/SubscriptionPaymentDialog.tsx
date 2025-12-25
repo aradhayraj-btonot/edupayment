@@ -138,16 +138,16 @@ export function SubscriptionPaymentDialog({
           {plans.map((plan) => (
             <Card
               key={plan.key}
-              className={`relative cursor-pointer transition-all hover:shadow-md ${
-                plan.key === "professional" ? "border-primary" : ""
-              } ${currentPlan === plan.key ? "ring-2 ring-primary" : ""}`}
-              onClick={() => !isProcessing && handleSubscribe(plan.key)}
-            >
-              {plan.key === "professional" && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                </div>
-              )}
+            className={`relative cursor-pointer transition-all hover:shadow-md ${
+              plan.key === "professional" ? "border-primary" : ""
+            } ${currentPlan === plan.key ? "ring-2 ring-primary" : ""}`}
+            onClick={() => !isProcessing && handleSubscribe(plan.key)}
+          >
+            {plan.key === "professional" && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+              </div>
+            )}
               <CardContent className="p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">{plan.name}</h3>
