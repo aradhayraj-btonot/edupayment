@@ -33,7 +33,7 @@ const Pricing = () => {
         "Advanced analytics",
         "Priority support",
         "Custom branding",
-        "API access",
+        "Notification on email",
       ],
       popular: true,
     },
