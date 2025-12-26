@@ -46,7 +46,7 @@ const Pricing = () => {
         "Unlimited students",
         "Multi-branch support",
         "All notification channels",
-        "Payment gateway (1% fee)",
+        "Payment gateway free but on Razorpay then 2%",
         "Custom reports",
         "Dedicated account manager",
         "White-label solution",
