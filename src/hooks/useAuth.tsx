@@ -78,6 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName: string, userRole: AppRole) => {
+    // Only allow parent role self-registration for security
+    if (userRole !== 'parent') {
+      return { error: new Error('Admin accounts can only be created by invitation. Please contact your school administrator.') };
+    }
+
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -92,10 +97,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (!error && data.user) {
-      // Insert the user role
+      // Insert the user role - only 'parent' role is allowed for self-registration
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({ user_id: data.user.id, role: userRole });
+        .insert({ user_id: data.user.id, role: 'parent' });
 
       if (roleError) {
         return { error: new Error('Account created but failed to set role. Please contact support.') };
