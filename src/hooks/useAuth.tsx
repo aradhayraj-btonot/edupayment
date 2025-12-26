@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  roleLoading: boolean;
   role: AppRole | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null }>;
@@ -20,9 +21,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
   const [role, setRole] = useState<AppRole | null>(null);
 
   const fetchUserRole = async (userId: string) => {
+    setRoleLoading(true);
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -34,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setRole(null);
     }
+    setRoleLoading(false);
   };
 
   useEffect(() => {
@@ -118,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, role, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, roleLoading, role, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
