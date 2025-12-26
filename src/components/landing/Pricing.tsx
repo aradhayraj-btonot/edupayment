@@ -29,7 +29,7 @@ const Pricing = () => {
         "Up to 2000 students",
         "Advanced fee structures",
         "SMS + Email + WhatsApp",
-        "Payment gateway (1.5% fee)",
+        "Payment gateway free",
         "Advanced analytics",
         "Priority support",
         "Custom branding",
