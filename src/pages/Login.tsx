@@ -178,7 +178,7 @@ const Login = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="admin" className="w-full">
+          <Tabs defaultValue="parent" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="admin" className="gap-2">
                 <Building className="w-4 h-4" />
@@ -195,23 +195,6 @@ const Login = () => {
                 onSubmit={(e) => handleSubmit(e, "admin")}
                 className="space-y-4"
               >
-                {isSignUp && (
-                  <div className="space-y-2">
-                    <Label htmlFor="admin-name">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="admin-name"
-                        type="text"
-                        placeholder="John Doe"
-                        className="pl-10"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
                 <div className="space-y-2">
                   <Label htmlFor="admin-email">Email</Label>
                   <div className="relative">
@@ -247,10 +230,15 @@ const Login = () => {
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={isLoading}
+                  disabled={isLoading || isSignUp}
                 >
-                  {isLoading ? "Please wait..." : isSignUp ? "Create Admin Account" : "Sign in as Admin"}
+                  {isLoading ? "Please wait..." : "Sign in as Admin"}
                 </Button>
+                {isSignUp && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    Admin accounts are created by invitation only. Please contact your school administrator.
+                  </p>
+                )}
               </form>
             </TabsContent>
 
