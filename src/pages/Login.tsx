@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user, role, loading } = useAuth();
+  const { signIn, signUp, user, role, loading, roleLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
@@ -22,14 +22,14 @@ const Login = () => {
   });
 
   useEffect(() => {
-    if (!loading && user && role) {
+    if (!loading && !roleLoading && user && role) {
       if (role === "admin") {
         navigate("/admin");
       } else if (role === "parent") {
         navigate("/parent");
       }
     }
-  }, [user, role, loading, navigate]);
+  }, [user, role, loading, roleLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent, userRole: "admin" | "parent") => {
     e.preventDefault();
