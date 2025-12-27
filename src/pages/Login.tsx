@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { GraduationCap, Mail, Lock, User, Building, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +16,7 @@ const Login = () => {
   const { signIn, signUp, user, role, loading, roleLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -39,6 +41,11 @@ const Login = () => {
       if (isSignUp) {
         if (!formData.fullName.trim()) {
           toast.error("Please enter your full name");
+          setIsLoading(false);
+          return;
+        }
+        if (!acceptedTerms) {
+          toast.error("Please accept the Terms and Conditions to continue");
           setIsLoading(false);
           return;
         }
@@ -295,11 +302,27 @@ const Login = () => {
                     />
                   </div>
                 </div>
+                {isSignUp && (
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="terms"
+                      checked={acceptedTerms}
+                      onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                      className="mt-1"
+                    />
+                    <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to the{" "}
+                      <Link to="/terms" className="text-primary hover:underline font-medium" target="_blank">
+                        Terms and Conditions
+                      </Link>
+                    </Label>
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={isLoading}
+                  disabled={isLoading || (isSignUp && !acceptedTerms)}
                 >
                   {isLoading ? "Please wait..." : isSignUp ? "Create Parent Account" : "Sign in as Parent"}
                 </Button>
