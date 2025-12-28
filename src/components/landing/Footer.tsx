@@ -16,10 +16,10 @@ const Footer = () => {
       { name: "Contact", href: "#contact" },
     ],
     legal: [
-      { name: "Privacy Policy", href: "#" },
-      { name: "Terms of Service", href: "#" },
-      { name: "Security", href: "#" },
-      { name: "GDPR", href: "#" },
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms of Service", href: "/terms" },
+      { name: "Security", href: "/security" },
+      { name: "EduPay Team", href: "/team-login" },
     ],
   };
 
