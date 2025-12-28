@@ -512,6 +512,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_team_role: { Args: { _user_id: string }; Returns: boolean }
       is_school_subscription_active: {
         Args: { _school_id: string }
         Returns: boolean

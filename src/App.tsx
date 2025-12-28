@@ -10,6 +10,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import ParentDashboard from "./pages/ParentDashboard";
+import TeamLogin from "./pages/TeamLogin";
+import TeamDashboard from "./pages/TeamDashboard";
 import About from "./pages/About";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import Security from "./pages/Security";
@@ -33,6 +35,15 @@ const App = () => (
               <Route path="/security" element={<Security />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/team-login" element={<TeamLogin />} />
+              <Route
+                path="/team"
+                element={
+                  <ProtectedRoute allowedRoles={['team']}>
+                    <TeamDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/admin"
                 element={
