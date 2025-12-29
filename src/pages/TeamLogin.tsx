@@ -5,17 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Shield, Lock, Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { Shield, Lock, Eye, EyeOff, GraduationCap, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
-const TEAM_ACCESS_PASSWORD = 'aradhayRAJ#46';
 
 const TeamLogin = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
-  const [step, setStep] = useState<'access' | 'login'>('access');
   const [accessPassword, setAccessPassword] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,49 +18,61 @@ const TeamLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleAccessVerification = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (accessPassword === TEAM_ACCESS_PASSWORD) {
-      setStep('login');
-      toast.success('Access granted! Please login with your team credentials.');
-    } else {
-      toast.error('Invalid access password. Contact EduPay administration.');
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!accessPassword.trim()) {
+      toast.error('Please enter the access password');
+      return;
+    }
+    
+    if (!email.trim() || !password.trim()) {
+      toast.error('Please enter your email and password');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
-      
+      // Call edge function that verifies:
+      // 1. Access password is correct
+      // 2. User exists and has team role
+      // 3. User credentials are valid
+      const { data, error } = await supabase.functions.invoke('verify-team-access', {
+        body: {
+          access_password: accessPassword,
+          email: email.trim(),
+          password: password,
+        },
+      });
+
       if (error) {
         toast.error(error.message || 'Login failed');
         setLoading(false);
         return;
       }
 
-      // Verify user has team role
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'team')
-          .maybeSingle();
-
-        if (roleData) {
-          toast.success('Welcome to EduPay Team Dashboard!');
-          navigate('/team');
-        } else {
-          await supabase.auth.signOut();
-          toast.error('You do not have team access. Contact EduPay administration.');
-        }
+      if (data.error) {
+        toast.error(data.error);
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      toast.error('An error occurred during login');
+
+      if (data.success && data.session) {
+        // Set the session in the client
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+
+        toast.success('Welcome to EduPay Team Dashboard!');
+        navigate('/team');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Team login error:', err);
+      toast.error(err.message || 'An error occurred during login');
     } finally {
       setLoading(false);
     }
@@ -92,91 +99,79 @@ const TeamLogin = () => {
             <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            <CardTitle className="text-xl">
-              {step === 'access' ? 'Secure Access Verification' : 'Team Login'}
-            </CardTitle>
+            <CardTitle className="text-xl">Secure Team Login</CardTitle>
             <CardDescription>
-              {step === 'access' 
-                ? 'Enter the special access password to proceed'
-                : 'Login with your team credentials'}
+              Login with your team credentials and access password
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {step === 'access' ? (
-              <form onSubmit={handleAccessVerification} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="access-password">Access Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="access-password"
-                      type={showAccessPassword ? 'text' : 'password'}
-                      value={accessPassword}
-                      onChange={(e) => setAccessPassword(e.target.value)}
-                      placeholder="Enter access password"
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAccessPassword(!showAccessPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showAccessPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="access-password">Access Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="access-password"
+                    type={showAccessPassword ? 'text' : 'password'}
+                    value={accessPassword}
+                    onChange={(e) => setAccessPassword(e.target.value)}
+                    placeholder="Enter access password"
+                    className="pl-10 pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAccessPassword(!showAccessPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showAccessPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-                <Button type="submit" className="w-full">
-                  Verify Access
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="team@edupay.com"
+                    className="pl-10"
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="pl-10 pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Logging in...' : 'Login to Dashboard'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => setStep('access')}
-                >
-                  Back to Access Verification
-                </Button>
-              </form>
-            )}
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Verifying...' : 'Login to Dashboard'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
