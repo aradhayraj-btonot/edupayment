@@ -6,26 +6,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerifyAccessRequest {
+interface TeamLoginRequest {
   access_password: string;
   email: string;
   password: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
+serve(async (req: Request): Promise<Response> => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const teamAccessPassword = Deno.env.get("TEAM_ACCESS_PASSWORD");
 
-    const TEAM_ACCESS_PASSWORD = Deno.env.get("TEAM_ACCESS_PASSWORD");
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    if (!TEAM_ACCESS_PASSWORD) {
+    if (!teamAccessPassword) {
       console.error("TEAM_ACCESS_PASSWORD not configured");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
@@ -33,80 +40,94 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { access_password, email, password }: VerifyAccessRequest = await req.json();
+    const { access_password, email, password }: TeamLoginRequest = await req.json();
+    const normalizedEmail = email.toLowerCase().trim();
 
-    console.log(`Team login attempt for email: ${email}`);
+    console.log(`[Team Login] Attempt for: ${normalizedEmail}`);
 
-    // Step 1: Verify access password
-    if (access_password !== TEAM_ACCESS_PASSWORD) {
-      console.log("Invalid access password");
+    // Step 1: Verify master access password
+    if (access_password !== teamAccessPassword) {
+      console.log(`[Team Login] Invalid access password for: ${normalizedEmail}`);
       return new Response(
         JSON.stringify({ error: "Invalid access password" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Step 2: Check if user exists and has team role BEFORE attempting login
-    // First, get the user by email from profiles table
-    const { data: profile, error: profileError } = await supabase
+    console.log(`[Team Login] Access password verified for: ${normalizedEmail}`);
+
+    // Step 2: Use service role client to check if user exists and has team role
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get profile by email
+    const { data: profile, error: profileError } = await adminClient
       .from("profiles")
-      .select("id, email")
-      .eq("email", email.toLowerCase().trim())
+      .select("id, email, full_name")
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (profileError) {
-      console.error("Error checking profile:", profileError);
-    }
-
-    if (!profile) {
-      console.log(`No user found with email: ${email}`);
+      console.error(`[Team Login] Profile lookup error:`, profileError);
       return new Response(
-        JSON.stringify({ error: "You do not have team access. Contact EduPay administration." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Failed to verify user" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check if this user has team role
-    const { data: roleData, error: roleError } = await supabase
+    if (!profile) {
+      console.log(`[Team Login] No profile found for: ${normalizedEmail}`);
+      return new Response(
+        JSON.stringify({ error: "No account found with this email. Please sign up first." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`[Team Login] Profile found: ${profile.id}`);
+
+    // Step 3: Check if user has team role
+    const { data: teamRole, error: roleError } = await adminClient
       .from("user_roles")
-      .select("role")
+      .select("id, role")
       .eq("user_id", profile.id)
       .eq("role", "team")
       .maybeSingle();
 
     if (roleError) {
-      console.error("Error checking role:", roleError);
+      console.error(`[Team Login] Role lookup error:`, roleError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify team access" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (!roleData) {
-      console.log(`User ${email} does not have team role`);
+    if (!teamRole) {
+      console.log(`[Team Login] User ${normalizedEmail} does not have team role`);
       return new Response(
         JSON.stringify({ error: "You do not have team access. Contact EduPay administration." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Step 3: User has team role, now verify their password by attempting sign in
-    // Use the anon key for sign in (we'll create a temporary client)
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+    console.log(`[Team Login] Team role verified for: ${normalizedEmail}`);
 
+    // Step 4: Authenticate user with their credentials using anon client
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+    
     const { data: authData, error: authError } = await anonClient.auth.signInWithPassword({
-      email,
-      password,
+      email: normalizedEmail,
+      password: password,
     });
 
     if (authError) {
-      console.log(`Authentication failed for ${email}: ${authError.message}`);
+      console.log(`[Team Login] Auth failed for ${normalizedEmail}: ${authError.message}`);
       return new Response(
-        JSON.stringify({ error: authError.message }),
+        JSON.stringify({ error: "Invalid email or password" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Team login successful for ${email}`);
+    console.log(`[Team Login] SUCCESS for: ${normalizedEmail}`);
 
-    // Return the session tokens so the client can use them
     return new Response(
       JSON.stringify({
         success: true,
@@ -117,12 +138,10 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error("Error in verify-team-access function:", error);
+    console.error("[Team Login] Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "An error occurred" }),
+      JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-};
-
-serve(handler);
+});
