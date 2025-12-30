@@ -246,6 +246,40 @@ export const useCreateCustomSubscription = () => {
   });
 };
 
+export const useCreateAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      email,
+      password,
+      fullName,
+      schoolId,
+    }: {
+      email: string;
+      password: string;
+      fullName: string;
+      schoolId: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('create-admin', {
+        body: { email, password, fullName, schoolId }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-admins'] });
+      queryClient.invalidateQueries({ queryKey: ['team-stats'] });
+      toast.success('Admin account created successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to create admin: ' + error.message);
+    },
+  });
+};
+
 export const useSupportTickets = () => {
   return useQuery({
     queryKey: ['support-tickets'],
