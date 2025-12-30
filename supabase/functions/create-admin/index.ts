@@ -96,37 +96,80 @@ Deno.serve(async (req) => {
 
     console.log(`Creating admin account for ${email} in school ${school.name}`);
 
-    // Create the user using service role (admin API)
-    const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName }
-    });
+    let userId: string;
 
-    if (createError) {
-      console.error('Error creating user:', createError);
-      return new Response(
-        JSON.stringify({ error: createError.message }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // First, check if user already exists
+    const { data: existingUsers } = await serviceClient.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+    if (existingUser) {
+      console.log(`User ${email} already exists with ID: ${existingUser.id}`);
+      userId = existingUser.id;
+
+      // Check if user already has admin role for this school
+      const { data: existingRole } = await serviceClient
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .eq('school_id', schoolId)
+        .maybeSingle();
+
+      if (existingRole) {
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: `User ${email} is already an admin for this school`,
+            userId,
+            alreadyExists: true
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Delete any existing parent role for this user (they're becoming an admin)
+      await serviceClient
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', 'parent');
+
+    } else {
+      // Create the user using service role (admin API)
+      const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName }
+      });
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        return new Response(
+          JSON.stringify({ error: createError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`User created with ID: ${newUser.user.id}`);
+      userId = newUser.user.id;
     }
-
-    console.log(`User created with ID: ${newUser.user.id}`);
 
     // Assign admin role with school_id
     const { error: roleInsertError } = await serviceClient
       .from('user_roles')
       .insert({
-        user_id: newUser.user.id,
+        user_id: userId,
         role: 'admin',
         school_id: schoolId
       });
 
     if (roleInsertError) {
       console.error('Error assigning role:', roleInsertError);
-      // Try to clean up the user if role assignment fails
-      await serviceClient.auth.admin.deleteUser(newUser.user.id);
+      // Only delete user if we just created them
+      if (!existingUser) {
+        await serviceClient.auth.admin.deleteUser(userId);
+      }
       return new Response(
         JSON.stringify({ error: 'Failed to assign admin role: ' + roleInsertError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -139,7 +182,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: `Admin account created for ${email}`,
-        userId: newUser.user.id 
+        userId 
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
