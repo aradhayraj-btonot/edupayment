@@ -280,6 +280,84 @@ export const useCreateAdmin = () => {
   });
 };
 
+export interface AdminInput {
+  email: string;
+  password: string;
+  fullName: string;
+}
+
+export interface CreateSchoolWithAdminsInput {
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  admins: AdminInput[];
+}
+
+export const useCreateSchoolWithAdmins = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateSchoolWithAdminsInput) => {
+      // 1. Create the school
+      const { data: school, error: schoolError } = await supabase
+        .from('schools')
+        .insert({
+          name: input.name,
+          address: input.address || null,
+          phone: input.phone || null,
+          email: input.email || null,
+        })
+        .select()
+        .single();
+
+      if (schoolError) throw schoolError;
+
+      // 2. Create admin accounts for this school
+      const adminResults = [];
+      for (const admin of input.admins) {
+        const { data, error } = await supabase.functions.invoke('create-admin', {
+          body: {
+            email: admin.email,
+            password: admin.password,
+            fullName: admin.fullName,
+            schoolId: school.id,
+          }
+        });
+
+        if (error) {
+          console.error('Failed to create admin:', admin.email, error);
+          adminResults.push({ email: admin.email, success: false, error: error.message });
+        } else if (data.error) {
+          console.error('Failed to create admin:', admin.email, data.error);
+          adminResults.push({ email: admin.email, success: false, error: data.error });
+        } else {
+          adminResults.push({ email: admin.email, success: true });
+        }
+      }
+
+      return { school, adminResults };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['team-schools'] });
+      queryClient.invalidateQueries({ queryKey: ['team-admins'] });
+      queryClient.invalidateQueries({ queryKey: ['team-stats'] });
+      
+      const successCount = result.adminResults.filter(a => a.success).length;
+      const failCount = result.adminResults.filter(a => !a.success).length;
+      
+      if (failCount === 0) {
+        toast.success(`School "${result.school.name}" created with ${successCount} admin(s)`);
+      } else {
+        toast.warning(`School created. ${successCount} admin(s) created, ${failCount} failed.`);
+      }
+    },
+    onError: (error) => {
+      toast.error('Failed to create school: ' + error.message);
+    },
+  });
+};
+
 export const useSupportTickets = () => {
   return useQuery({
     queryKey: ['support-tickets'],

@@ -20,6 +20,8 @@ import {
   useAllSubscriptions,
   useCreateCustomSubscription,
   useCreateAdmin,
+  useCreateSchoolWithAdmins,
+  type AdminInput,
 } from '@/hooks/useTeamData';
 import { 
   GraduationCap, 
@@ -51,6 +53,7 @@ const TeamDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [schoolDialogOpen, setSchoolDialogOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState('');
   const [customPlan, setCustomPlan] = useState<'starter' | 'professional' | 'enterprise'>('starter');
   const [customAmount, setCustomAmount] = useState('');
@@ -59,6 +62,15 @@ const TeamDashboard = () => {
   const [adminPassword, setAdminPassword] = useState('');
   const [adminFullName, setAdminFullName] = useState('');
   const [adminSchool, setAdminSchool] = useState('');
+  
+  // Create school with admins state
+  const [newSchoolName, setNewSchoolName] = useState('');
+  const [newSchoolAddress, setNewSchoolAddress] = useState('');
+  const [newSchoolPhone, setNewSchoolPhone] = useState('');
+  const [newSchoolEmail, setNewSchoolEmail] = useState('');
+  const [newSchoolAdmins, setNewSchoolAdmins] = useState<AdminInput[]>([
+    { email: '', password: '', fullName: '' }
+  ]);
 
   const { data: stats, isLoading: statsLoading } = useTeamStats();
   const { data: schools, isLoading: schoolsLoading } = useAllSchools();
@@ -68,6 +80,7 @@ const TeamDashboard = () => {
   const { data: subscriptions, isLoading: subscriptionsLoading } = useAllSubscriptions();
   const createSubscription = useCreateCustomSubscription();
   const createAdmin = useCreateAdmin();
+  const createSchoolWithAdmins = useCreateSchoolWithAdmins();
 
   const handleLogout = async () => {
     await signOut();
@@ -111,6 +124,52 @@ const TeamDashboard = () => {
         setAdminPassword('');
         setAdminFullName('');
         setAdminSchool('');
+      }
+    });
+  };
+
+  const handleAddAdminField = () => {
+    setNewSchoolAdmins([...newSchoolAdmins, { email: '', password: '', fullName: '' }]);
+  };
+
+  const handleRemoveAdminField = (index: number) => {
+    if (newSchoolAdmins.length > 1) {
+      setNewSchoolAdmins(newSchoolAdmins.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleUpdateAdminField = (index: number, field: keyof AdminInput, value: string) => {
+    const updated = [...newSchoolAdmins];
+    updated[index] = { ...updated[index], [field]: value };
+    setNewSchoolAdmins(updated);
+  };
+
+  const handleCreateSchoolWithAdmins = () => {
+    if (!newSchoolName.trim()) {
+      toast.error('Please enter school name');
+      return;
+    }
+
+    const validAdmins = newSchoolAdmins.filter(a => a.email && a.password && a.fullName);
+    if (validAdmins.length === 0) {
+      toast.error('Please add at least one admin with all fields filled');
+      return;
+    }
+
+    createSchoolWithAdmins.mutate({
+      name: newSchoolName,
+      address: newSchoolAddress || undefined,
+      phone: newSchoolPhone || undefined,
+      email: newSchoolEmail || undefined,
+      admins: validAdmins,
+    }, {
+      onSuccess: () => {
+        setSchoolDialogOpen(false);
+        setNewSchoolName('');
+        setNewSchoolAddress('');
+        setNewSchoolPhone('');
+        setNewSchoolEmail('');
+        setNewSchoolAdmins([{ email: '', password: '', fullName: '' }]);
       }
     });
   };
@@ -359,14 +418,139 @@ const TeamDashboard = () => {
                   <CardTitle>All Schools</CardTitle>
                   <CardDescription>Manage all registered schools</CardDescription>
                 </div>
-                <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Subscription
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
+                <div className="flex items-center gap-2">
+                  <Dialog open={schoolDialogOpen} onOpenChange={setSchoolDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add School
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Create New School</DialogTitle>
+                        <DialogDescription>
+                          Create a new school with one or more admin accounts.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-6 pt-4">
+                        {/* School Details */}
+                        <div className="space-y-4">
+                          <h4 className="font-semibold text-sm">School Details</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>School Name *</Label>
+                              <Input
+                                value={newSchoolName}
+                                onChange={(e) => setNewSchoolName(e.target.value)}
+                                placeholder="Enter school name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Email</Label>
+                              <Input
+                                type="email"
+                                value={newSchoolEmail}
+                                onChange={(e) => setNewSchoolEmail(e.target.value)}
+                                placeholder="school@example.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Phone</Label>
+                              <Input
+                                value={newSchoolPhone}
+                                onChange={(e) => setNewSchoolPhone(e.target.value)}
+                                placeholder="Phone number"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Address</Label>
+                              <Input
+                                value={newSchoolAddress}
+                                onChange={(e) => setNewSchoolAddress(e.target.value)}
+                                placeholder="School address"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Admin Accounts */}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm">Admin Accounts</h4>
+                            <Button type="button" variant="outline" size="sm" onClick={handleAddAdminField}>
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add Admin
+                            </Button>
+                          </div>
+                          
+                          {newSchoolAdmins.map((admin, index) => (
+                            <div key={index} className="p-4 border rounded-lg space-y-3 bg-muted/30">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">Admin #{index + 1}</span>
+                                {newSchoolAdmins.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveAdminField(index)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    Remove
+                                  </Button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Full Name *</Label>
+                                  <Input
+                                    value={admin.fullName}
+                                    onChange={(e) => handleUpdateAdminField(index, 'fullName', e.target.value)}
+                                    placeholder="Full name"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Email *</Label>
+                                  <Input
+                                    type="email"
+                                    value={admin.email}
+                                    onChange={(e) => handleUpdateAdminField(index, 'email', e.target.value)}
+                                    placeholder="admin@example.com"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Password *</Label>
+                                  <Input
+                                    type="password"
+                                    value={admin.password}
+                                    onChange={(e) => handleUpdateAdminField(index, 'password', e.target.value)}
+                                    placeholder="Password"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <Button 
+                          className="w-full" 
+                          onClick={handleCreateSchoolWithAdmins}
+                          disabled={createSchoolWithAdmins.isPending}
+                        >
+                          {createSchoolWithAdmins.isPending ? 'Creating...' : 'Create School with Admins'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Subscription
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
