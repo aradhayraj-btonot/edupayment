@@ -19,6 +19,7 @@ import {
   useAllPayments,
   useAllSubscriptions,
   useCreateCustomSubscription,
+  useCreateAdmin,
 } from '@/hooks/useTeamData';
 import { 
   GraduationCap, 
@@ -49,10 +50,15 @@ const TeamDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState('');
   const [customPlan, setCustomPlan] = useState<'starter' | 'professional' | 'enterprise'>('starter');
   const [customAmount, setCustomAmount] = useState('');
   const [customDuration, setCustomDuration] = useState('12');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminFullName, setAdminFullName] = useState('');
+  const [adminSchool, setAdminSchool] = useState('');
 
   const { data: stats, isLoading: statsLoading } = useTeamStats();
   const { data: schools, isLoading: schoolsLoading } = useAllSchools();
@@ -61,6 +67,7 @@ const TeamDashboard = () => {
   const { data: payments, isLoading: paymentsLoading } = useAllPayments();
   const { data: subscriptions, isLoading: subscriptionsLoading } = useAllSubscriptions();
   const createSubscription = useCreateCustomSubscription();
+  const createAdmin = useCreateAdmin();
 
   const handleLogout = async () => {
     await signOut();
@@ -86,7 +93,29 @@ const TeamDashboard = () => {
     setCustomAmount('');
   };
 
-  const filteredParents = parents?.filter(p => 
+  const handleCreateAdmin = () => {
+    if (!adminEmail || !adminPassword || !adminFullName || !adminSchool) {
+      toast.error('Please fill all fields');
+      return;
+    }
+
+    createAdmin.mutate({
+      email: adminEmail,
+      password: adminPassword,
+      fullName: adminFullName,
+      schoolId: adminSchool,
+    }, {
+      onSuccess: () => {
+        setAdminDialogOpen(false);
+        setAdminEmail('');
+        setAdminPassword('');
+        setAdminFullName('');
+        setAdminSchool('');
+      }
+    });
+  };
+
+  const filteredParents = parents?.filter(p =>
     p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -468,16 +497,84 @@ const TeamDashboard = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <CardTitle>All Admin Accounts</CardTitle>
-                    <CardDescription>View all school administrator accounts</CardDescription>
+                    <CardDescription>View and manage school administrator accounts</CardDescription>
                   </div>
-                  <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search admins..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-full md:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search admins..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Create Admin
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create Admin Account</DialogTitle>
+                          <DialogDescription>
+                            Create a new administrator account for a school.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 pt-4">
+                          <div className="space-y-2">
+                            <Label>Full Name</Label>
+                            <Input
+                              value={adminFullName}
+                              onChange={(e) => setAdminFullName(e.target.value)}
+                              placeholder="Enter full name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input
+                              type="email"
+                              value={adminEmail}
+                              onChange={(e) => setAdminEmail(e.target.value)}
+                              placeholder="Enter email address"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Password</Label>
+                            <Input
+                              type="password"
+                              value={adminPassword}
+                              onChange={(e) => setAdminPassword(e.target.value)}
+                              placeholder="Enter password"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Select School</Label>
+                            <Select value={adminSchool} onValueChange={setAdminSchool}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a school" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {schools?.map((school) => (
+                                  <SelectItem key={school.id} value={school.id}>
+                                    {school.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button 
+                            className="w-full" 
+                            onClick={handleCreateAdmin}
+                            disabled={createAdmin.isPending}
+                          >
+                            {createAdmin.isPending ? 'Creating...' : 'Create Admin Account'}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardHeader>

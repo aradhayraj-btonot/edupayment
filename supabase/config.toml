@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.verify-team-access]
 verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = true
