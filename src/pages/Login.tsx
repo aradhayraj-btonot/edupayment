@@ -24,11 +24,19 @@ const Login = () => {
   });
 
   useEffect(() => {
-    if (!loading && !roleLoading && user && role) {
+    // Wait for both auth and role to be fully loaded
+    if (loading || roleLoading) {
+      return;
+    }
+    
+    if (user && role) {
+      console.log('Redirecting user with role:', role);
       if (role === "admin") {
-        navigate("/admin");
+        navigate("/admin", { replace: true });
       } else if (role === "parent") {
-        navigate("/parent");
+        navigate("/parent", { replace: true });
+      } else if (role === "team") {
+        navigate("/team", { replace: true });
       }
     }
   }, [user, role, loading, roleLoading, navigate]);
