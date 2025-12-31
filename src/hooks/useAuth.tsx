@@ -29,11 +29,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', userId);
 
-    if (!error && data) {
-      setRole(data.role as AppRole);
+    if (!error && data && data.length > 0) {
+      // Priority: team > admin > parent > student
+      const roles = data.map(r => r.role as AppRole);
+      if (roles.includes('team')) {
+        setRole('team');
+      } else if (roles.includes('admin')) {
+        setRole('admin');
+      } else if (roles.includes('parent')) {
+        setRole('parent');
+      } else if (roles.includes('student')) {
+        setRole('student');
+      } else {
+        setRole(roles[0]);
+      }
     } else {
       setRole(null);
     }
