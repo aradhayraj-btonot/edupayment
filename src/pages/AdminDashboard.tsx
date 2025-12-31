@@ -65,6 +65,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/useStudents";
 import { usePayments, usePaymentStats, usePendingPayments, useVerifyPayment } from "@/hooks/usePayments";
 import { useSchools, useCreateSchool, useUpdateSchool } from "@/hooks/useSchools";
+import { useAdminSchool, useUpdateAdminSchool } from "@/hooks/useAdminSchool";
 import { useFeeStructures, useCreateFeeStructure, useUpdateFeeStructure, useDeleteFeeStructure, useAllStudentFees } from "@/hooks/useFees";
 import { useSchoolNotifications, useSendNotification, useSendReceipt } from "@/hooks/useNotifications";
 import { format } from "date-fns";
@@ -85,7 +86,6 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [addStudentOpen, setAddStudentOpen] = useState(false);
-  const [addSchoolOpen, setAddSchoolOpen] = useState(false);
   const [addFeeOpen, setAddFeeOpen] = useState(false);
 
   // Notification form state
@@ -96,8 +96,8 @@ const AdminDashboard = () => {
   });
 
   // Data hooks
-  const { data: schools = [], isLoading: schoolsLoading } = useSchools();
-  const selectedSchool = schools[0];
+  const { data: adminSchool, isLoading: adminSchoolLoading } = useAdminSchool();
+  const selectedSchool = adminSchool;
   const { data: students = [], isLoading: studentsLoading } = useStudents(selectedSchool?.id);
   const { data: payments = [], isLoading: paymentsLoading } = usePayments();
   const { data: paymentStats } = usePaymentStats();
@@ -110,8 +110,7 @@ const AdminDashboard = () => {
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
   const deleteStudent = useDeleteStudent();
-  const createSchool = useCreateSchool();
-  const updateSchool = useUpdateSchool();
+  const updateAdminSchool = useUpdateAdminSchool();
   const createFee = useCreateFeeStructure();
   const updateFee = useUpdateFeeStructure();
   const deleteFee = useDeleteFeeStructure();
@@ -127,6 +126,7 @@ const AdminDashboard = () => {
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [editFeeOpen, setEditFeeOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<any>(null);
+  const [editSchoolOpen, setEditSchoolOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'school' | 'account' | 'appearance' | 'subscription'>('subscription');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -184,9 +184,11 @@ const AdminDashboard = () => {
     setAddStudentOpen(false);
   };
 
-  const handleAddSchool = async (e: React.FormEvent) => {
+  const handleEditSchool = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createSchool.mutateAsync({
+    if (!adminSchool) return;
+    await updateAdminSchool.mutateAsync({
+      id: adminSchool.id,
       name: schoolForm.name,
       address: schoolForm.address || null,
       phone: schoolForm.phone || null,
@@ -194,9 +196,7 @@ const AdminDashboard = () => {
       upi_id: schoolForm.upi_id || null,
       upi_qr_code_url: schoolForm.upi_qr_code_url || null,
     });
-    
-    setSchoolForm({ name: "", address: "", phone: "", email: "", upi_id: "", upi_qr_code_url: "" });
-    setAddSchoolOpen(false);
+    setEditSchoolOpen(false);
   };
 
   const handleAddFee = async (e: React.FormEvent) => {
@@ -389,7 +389,7 @@ const AdminDashboard = () => {
                   {activeTab === "verify" && `${pendingPayments.length} payments awaiting verification`}
                   {activeTab === "students" && `${students.length} students enrolled`}
                   {activeTab === "payments" && `${payments.length} total payments`}
-                  {activeTab === "schools" && `${schools.length} schools registered`}
+                  {activeTab === "schools" && (adminSchool ? "Your school details" : "No school assigned")}
                   {activeTab === "fees" && `${feeStructures.length} fee structures`}
                   {activeTab === "notifications" && `${notifications.length} notifications`}
                 </p>
@@ -678,113 +678,182 @@ const AdminDashboard = () => {
           {activeTab === "schools" && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display">Schools</CardTitle>
-                <Dialog open={addSchoolOpen} onOpenChange={setAddSchoolOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      Add School
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New School</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleAddSchool} className="space-y-4">
-                      <div>
-                        <Label htmlFor="school-name">School Name *</Label>
-                        <Input
-                          id="school-name"
-                          value={schoolForm.name}
-                          onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="school-address">Address</Label>
-                        <Input
-                          id="school-address"
-                          value={schoolForm.address}
-                          onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="school-phone">Phone</Label>
-                        <Input
-                          id="school-phone"
-                          value={schoolForm.phone}
-                          onChange={(e) => setSchoolForm({ ...schoolForm, phone: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="school-email">Email</Label>
-                        <Input
-                          id="school-email"
-                          type="email"
-                          value={schoolForm.email}
-                          onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
-                        />
-                      </div>
-                      <div className="border-t pt-4 mt-4">
-                        <p className="text-sm font-medium text-foreground mb-3">Payment Details</p>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="upi-id">UPI ID *</Label>
-                            <Input
-                              id="upi-id"
-                              placeholder="e.g., school@upi"
-                              value={schoolForm.upi_id}
-                              onChange={(e) => setSchoolForm({ ...schoolForm, upi_id: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="qr-url">Payment QR Code URL</Label>
-                            <Input
-                              id="qr-url"
-                              placeholder="https://..."
-                              value={schoolForm.upi_qr_code_url}
-                              onChange={(e) => setSchoolForm({ ...schoolForm, upi_qr_code_url: e.target.value })}
-                            />
+                <CardTitle className="text-lg font-display">My School</CardTitle>
+                {adminSchool && (
+                  <Dialog open={editSchoolOpen} onOpenChange={(open) => {
+                    setEditSchoolOpen(open);
+                    if (open && adminSchool) {
+                      setSchoolForm({
+                        name: adminSchool.name || "",
+                        address: adminSchool.address || "",
+                        phone: adminSchool.phone || "",
+                        email: adminSchool.email || "",
+                        upi_id: adminSchool.upi_id || "",
+                        upi_qr_code_url: adminSchool.upi_qr_code_url || "",
+                      });
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2" variant="outline">
+                        <Edit className="w-4 h-4" />
+                        Edit School
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit School Details</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleEditSchool} className="space-y-4">
+                        <div>
+                          <Label htmlFor="edit-school-name">School Name *</Label>
+                          <Input
+                            id="edit-school-name"
+                            value={schoolForm.name}
+                            onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-school-address">Address</Label>
+                          <Textarea
+                            id="edit-school-address"
+                            value={schoolForm.address}
+                            onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-school-phone">Phone</Label>
+                          <Input
+                            id="edit-school-phone"
+                            value={schoolForm.phone}
+                            onChange={(e) => setSchoolForm({ ...schoolForm, phone: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-school-email">Email</Label>
+                          <Input
+                            id="edit-school-email"
+                            type="email"
+                            value={schoolForm.email}
+                            onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
+                          />
+                        </div>
+                        <div className="border-t pt-4 mt-4">
+                          <p className="text-sm font-medium text-foreground mb-3">Payment Details</p>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="edit-upi-id">UPI ID</Label>
+                              <Input
+                                id="edit-upi-id"
+                                placeholder="e.g., school@upi"
+                                value={schoolForm.upi_id}
+                                onChange={(e) => setSchoolForm({ ...schoolForm, upi_id: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-qr-url">Payment QR Code URL</Label>
+                              <Input
+                                id="edit-qr-url"
+                                placeholder="https://..."
+                                value={schoolForm.upi_qr_code_url}
+                                onChange={(e) => setSchoolForm({ ...schoolForm, upi_qr_code_url: e.target.value })}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <Button type="submit" className="w-full" disabled={createSchool.isPending}>
-                        {createSchool.isPending ? "Adding..." : "Add School"}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                        <Button type="submit" className="w-full" disabled={updateAdminSchool.isPending}>
+                          {updateAdminSchool.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </CardHeader>
               <CardContent>
-                {schoolsLoading ? (
+                {adminSchoolLoading ? (
                   <div className="flex justify-center py-8">
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
-                ) : schools.length === 0 ? (
+                ) : !adminSchool ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No schools added yet. Add your first school to get started.
+                    <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No school assigned to your account.</p>
+                    <p className="text-sm mt-2">Please contact the EduPay team to be assigned to a school.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {schools.map((school) => (
-                      <div
-                        key={school.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <Building className="w-6 h-6 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground">{school.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {school.address || "No address"} • {school.email || "No email"}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge variant="default">Active</Badge>
+                  <div className="space-y-6">
+                    {/* School Header */}
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50">
+                      <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                        {adminSchool.logo_url ? (
+                          <img src={adminSchool.logo_url} alt="School logo" className="w-12 h-12 rounded-lg object-cover" />
+                        ) : (
+                          <Building className="w-8 h-8 text-primary" />
+                        )}
                       </div>
-                    ))}
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-foreground">{adminSchool.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {adminSchool.subscription_active ? 
+                            <Badge variant="default" className="mt-1">Subscription Active</Badge> : 
+                            <Badge variant="destructive" className="mt-1">Subscription Inactive</Badge>
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* School Details Grid */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Contact Information */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Contact Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Building className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm">{adminSchool.address || "No address set"}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="w-4 h-4 text-muted-foreground text-center">📧</span>
+                            <span className="text-sm">{adminSchool.email || "No email set"}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="w-4 h-4 text-muted-foreground text-center">📞</span>
+                            <span className="text-sm">{adminSchool.phone || "No phone set"}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Payment Information */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Payment Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">UPI ID</p>
+                            <p className="text-sm font-medium">{adminSchool.upi_id || "Not configured"}</p>
+                          </div>
+                          {adminSchool.upi_qr_code_url && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-2">QR Code</p>
+                              <img 
+                                src={adminSchool.upi_qr_code_url} 
+                                alt="UPI QR Code" 
+                                className="w-24 h-24 rounded-lg border"
+                              />
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Timestamps */}
+                    <div className="flex gap-4 text-xs text-muted-foreground pt-4 border-t">
+                      <span>Created: {format(new Date(adminSchool.created_at), 'PPP')}</span>
+                      <span>Last Updated: {format(new Date(adminSchool.updated_at), 'PPP')}</span>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -1569,7 +1638,7 @@ const AdminDashboard = () => {
                             defaultValue={selectedSchool.upi_id || ''}
                             onBlur={(e) => {
                               if (e.target.value !== selectedSchool.upi_id) {
-                                updateSchool.mutate({ id: selectedSchool.id, upi_id: e.target.value });
+                                updateAdminSchool.mutate({ id: selectedSchool.id, upi_id: e.target.value });
                               }
                             }}
                           />
@@ -1624,7 +1693,7 @@ const AdminDashboard = () => {
                                 reader.onloadend = async () => {
                                   // For simplicity, we'll use a data URL
                                   // In production, you'd upload to storage
-                                  await updateSchool.mutateAsync({ 
+                                  await updateAdminSchool.mutateAsync({ 
                                     id: selectedSchool.id, 
                                     upi_qr_code_url: reader.result as string 
                                   });
@@ -1654,7 +1723,7 @@ const AdminDashboard = () => {
                           defaultValue={selectedSchool.name}
                           onBlur={(e) => {
                             if (e.target.value !== selectedSchool.name) {
-                              updateSchool.mutate({ id: selectedSchool.id, name: e.target.value });
+                              updateAdminSchool.mutate({ id: selectedSchool.id, name: e.target.value });
                             }
                           }}
                         />
@@ -1667,7 +1736,7 @@ const AdminDashboard = () => {
                           defaultValue={selectedSchool.email || ''}
                           onBlur={(e) => {
                             if (e.target.value !== selectedSchool.email) {
-                              updateSchool.mutate({ id: selectedSchool.id, email: e.target.value });
+                              updateAdminSchool.mutate({ id: selectedSchool.id, email: e.target.value });
                             }
                           }}
                         />
@@ -1679,7 +1748,7 @@ const AdminDashboard = () => {
                           defaultValue={selectedSchool.phone || ''}
                           onBlur={(e) => {
                             if (e.target.value !== selectedSchool.phone) {
-                              updateSchool.mutate({ id: selectedSchool.id, phone: e.target.value });
+                              updateAdminSchool.mutate({ id: selectedSchool.id, phone: e.target.value });
                             }
                           }}
                         />
@@ -1691,7 +1760,7 @@ const AdminDashboard = () => {
                           defaultValue={selectedSchool.address || ''}
                           onBlur={(e) => {
                             if (e.target.value !== selectedSchool.address) {
-                              updateSchool.mutate({ id: selectedSchool.id, address: e.target.value });
+                              updateAdminSchool.mutate({ id: selectedSchool.id, address: e.target.value });
                             }
                           }}
                         />
