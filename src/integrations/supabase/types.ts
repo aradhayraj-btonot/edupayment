@@ -464,6 +464,59 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          category: Database["public"]["Enums"]["ticket_category"]
+          created_at: string
+          id: string
+          message: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          school_id: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["ticket_category"]
+          created_at?: string
+          id?: string
+          message: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          school_id?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["ticket_category"]
+          created_at?: string
+          id?: string
+          message?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          school_id?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -532,6 +585,14 @@ export type Database = {
       payment_status: "pending" | "completed" | "failed" | "refunded"
       subscription_plan: "starter" | "professional" | "enterprise"
       subscription_status: "active" | "expired" | "cancelled" | "pending"
+      ticket_category:
+        | "payment"
+        | "technical"
+        | "account"
+        | "fee_structure"
+        | "notification"
+        | "other"
+      ticket_status: "open" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -673,6 +734,15 @@ export const Constants = {
       payment_status: ["pending", "completed", "failed", "refunded"],
       subscription_plan: ["starter", "professional", "enterprise"],
       subscription_status: ["active", "expired", "cancelled", "pending"],
+      ticket_category: [
+        "payment",
+        "technical",
+        "account",
+        "fee_structure",
+        "notification",
+        "other",
+      ],
+      ticket_status: ["open", "in_progress", "resolved", "closed"],
     },
   },
 } as const

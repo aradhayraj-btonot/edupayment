@@ -43,6 +43,7 @@ import {
   Settings,
   RefreshCw,
 } from 'lucide-react';
+import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -872,116 +873,7 @@ const TeamDashboard = () => {
 
           {/* Support Tab */}
           <TabsContent value="support">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <HeadphonesIcon className="w-5 h-5" />
-                    Customer Support
-                  </CardTitle>
-                  <CardDescription>Help and support management</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h4 className="font-semibold mb-2">Support Email</h4>
-                    <a href="mailto:aradhayrajbusiness@gmail.com" className="text-primary hover:underline">
-                      aradhayrajbusiness@gmail.com
-                    </a>
-                  </div>
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h4 className="font-semibold mb-2">Support Phone</h4>
-                    <a href="tel:+919708565215" className="text-primary hover:underline">
-                      +91 9708565215
-                    </a>
-                  </div>
-                  <Button className="w-full" onClick={() => window.open('mailto:aradhayrajbusiness@gmail.com')}>
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Compose Support Email
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    Quick Support Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('schools')}>
-                    <Building2 className="w-4 h-4 mr-2" />
-                    View School Issues
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('payments')}>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Review Payment Problems
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => setSubscriptionDialogOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Grant Custom Subscription
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('parents')}>
-                    <Users className="w-4 h-4 mr-2" />
-                    Find Parent Account
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('admins')}>
-                    <UserCheck className="w-4 h-4 mr-2" />
-                    Find Admin Account
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Subscriptions Overview */}
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <CardTitle>All Subscriptions</CardTitle>
-                  <CardDescription>Subscription management across all schools</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>School</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Started</TableHead>
-                        <TableHead>Expires</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {subscriptionsLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center">Loading...</TableCell>
-                        </TableRow>
-                      ) : subscriptions?.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center">No subscriptions found</TableCell>
-                        </TableRow>
-                      ) : (
-                        subscriptions?.map((sub) => (
-                          <TableRow key={sub.id}>
-                            <TableCell className="font-medium">{sub.schools?.name}</TableCell>
-                            <TableCell>
-                              <Badge>{sub.plan}</Badge>
-                            </TableCell>
-                            <TableCell className="font-bold">{formatCurrency(sub.amount)}</TableCell>
-                            <TableCell>
-                              <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
-                                {sub.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{format(new Date(sub.starts_at), 'PP')}</TableCell>
-                            <TableCell>{format(new Date(sub.expires_at), 'PP')}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
+            <TeamTicketManager />
           </TabsContent>
         </Tabs>
       </main>

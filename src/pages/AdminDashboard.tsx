@@ -59,6 +59,7 @@ import {
   Lock,
   QrCode,
   Upload,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,6 +80,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { useIsSubscriptionActive } from "@/hooks/useSubscription";
+import { CreateTicketDialog } from "@/components/support/CreateTicketDialog";
+import { TicketList } from "@/components/support/TicketList";
+import { useMyTickets } from "@/hooks/useSupportTickets";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -105,6 +109,7 @@ const AdminDashboard = () => {
   const { data: notifications = [], isLoading: notificationsLoading } = useSchoolNotifications(selectedSchool?.id);
   const { data: pendingPayments = [], isLoading: pendingPaymentsLoading } = usePendingPayments();
   const { data: allStudentFees = [], isLoading: allStudentFeesLoading } = useAllStudentFees(selectedSchool?.id);
+  const { data: myTickets = [], isLoading: myTicketsLoading } = useMyTickets();
 
   // Mutations
   const createStudent = useCreateStudent();
@@ -278,6 +283,7 @@ const AdminDashboard = () => {
     { icon: CreditCard, label: "Payments", key: "payments" },
     { icon: BarChart3, label: "Fee Structures", key: "fees" },
     { icon: Bell, label: "Notifications", key: "notifications" },
+    { icon: MessageSquare, label: "Support", key: "support" },
     { icon: Settings, label: "Settings", key: "settings" },
   ];
 
@@ -1865,6 +1871,20 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               )}
+            </div>
+          )}
+
+          {/* Support Tab */}
+          {activeTab === "support" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-display font-bold text-foreground">Support</h2>
+                  <p className="text-muted-foreground">Submit and track your support tickets</p>
+                </div>
+                <CreateTicketDialog schoolId={selectedSchool?.id} />
+              </div>
+              <TicketList tickets={myTickets || []} isLoading={myTicketsLoading} />
             </div>
           )}
         </div>

@@ -26,6 +26,7 @@ import {
   Moon,
   Sun,
   Lock,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +51,9 @@ import { Switch } from "@/components/ui/switch";
 import { downloadReceipt, ReceiptData } from "@/lib/generateReceipt";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionBlocker } from "@/components/subscription/SubscriptionBlocker";
+import { CreateTicketDialog } from "@/components/support/CreateTicketDialog";
+import { TicketList } from "@/components/support/TicketList";
+import { useMyTickets } from "@/hooks/useSupportTickets";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
@@ -70,6 +74,7 @@ const ParentDashboard = () => {
   const markAsRead = useMarkNotificationRead();
   const createPayment = useCreatePayment();
   const uploadScreenshot = useUploadScreenshot();
+  const { data: myTickets = [], isLoading: myTicketsLoading } = useMyTickets();
   
   // Screenshot upload state
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -185,6 +190,7 @@ const ParentDashboard = () => {
     { icon: CreditCard, label: "Pay Fees", key: "pay" },
     { icon: History, label: "Payment History", key: "history" },
     { icon: Bell, label: "Notifications", key: "notifications" },
+    { icon: MessageSquare, label: "Support", key: "support" },
     { icon: Settings, label: "Settings", key: "settings" },
   ];
 
@@ -1035,6 +1041,20 @@ const ParentDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Support Tab */}
+          {activeTab === "support" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-display font-bold text-foreground">Support</h2>
+                  <p className="text-muted-foreground">Submit and track your support tickets</p>
+                </div>
+                <CreateTicketDialog schoolId={selectedStudent?.school_id} />
+              </div>
+              <TicketList tickets={myTickets} isLoading={myTicketsLoading} />
             </div>
           )}
         </div>
