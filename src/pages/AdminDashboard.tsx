@@ -65,6 +65,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/useStudents";
 import { usePayments, usePaymentStats, usePendingPayments, useVerifyPayment } from "@/hooks/usePayments";
+import { useMonthlyAnalytics } from "@/hooks/useAnalytics";
 import { useSchools, useCreateSchool, useUpdateSchool } from "@/hooks/useSchools";
 import { useAdminSchool, useUpdateAdminSchool } from "@/hooks/useAdminSchool";
 import { useFeeStructures, useCreateFeeStructure, useUpdateFeeStructure, useDeleteFeeStructure, useAllStudentFees } from "@/hooks/useFees";
@@ -105,6 +106,7 @@ const AdminDashboard = () => {
   const { data: students = [], isLoading: studentsLoading } = useStudents(selectedSchool?.id);
   const { data: payments = [], isLoading: paymentsLoading } = usePayments();
   const { data: paymentStats } = usePaymentStats();
+  const { data: analytics } = useMonthlyAnalytics(selectedSchool?.id);
   const { data: feeStructures = [] } = useFeeStructures(selectedSchool?.id);
   const { data: notifications = [], isLoading: notificationsLoading } = useSchoolNotifications(selectedSchool?.id);
   const { data: pendingPayments = [], isLoading: pendingPaymentsLoading } = usePendingPayments();
@@ -241,24 +243,24 @@ const AdminDashboard = () => {
     {
       title: "Total Collections",
       value: `₹${(paymentStats?.totalCollected || 0).toLocaleString('en-IN')}`,
-      change: "+12.5%",
-      trend: "up",
+      change: analytics?.changes.collections.percentage || "+0",
+      trend: analytics?.changes.collections.trend || "neutral",
       icon: IndianRupee,
       color: "bg-success/10 text-success",
     },
     {
       title: "Pending Fees",
       value: `₹${(paymentStats?.pendingAmount || 0).toLocaleString('en-IN')}`,
-      change: "-5.2%",
-      trend: "down",
+      change: analytics?.changes.pending.percentage || "+0",
+      trend: analytics?.changes.pending.trend === 'up' ? 'down' : analytics?.changes.pending.trend === 'down' ? 'up' : 'neutral',
       icon: Clock,
       color: "bg-warning/10 text-warning",
     },
     {
       title: "Total Students",
       value: students.length.toString(),
-      change: `+${students.length}`,
-      trend: "up",
+      change: analytics?.changes.students.percentage || "+0",
+      trend: analytics?.changes.students.trend || "neutral",
       icon: Users,
       color: "bg-info/10 text-info",
     },
@@ -267,8 +269,8 @@ const AdminDashboard = () => {
       value: paymentStats?.completedCount && paymentStats?.pendingCount
         ? `${Math.round((paymentStats.completedCount / (paymentStats.completedCount + paymentStats.pendingCount)) * 100)}%`
         : "0%",
-      change: "+2.1%",
-      trend: "up",
+      change: analytics?.changes.paymentRate.percentage || "+0",
+      trend: analytics?.changes.paymentRate.trend || "neutral",
       icon: TrendingUp,
       color: "bg-primary/10 text-primary",
     },
