@@ -358,6 +358,98 @@ export const useCreateSchoolWithAdmins = () => {
   });
 };
 
+export const useUpdateSubscription = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      subscriptionId,
+      plan,
+      amount,
+      durationMonths,
+      status,
+    }: {
+      subscriptionId: string;
+      plan?: 'starter' | 'professional' | 'enterprise';
+      amount?: number;
+      durationMonths?: number;
+      status?: 'active' | 'expired' | 'cancelled' | 'pending';
+    }) => {
+      const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+      
+      if (plan) updates.plan = plan;
+      if (amount !== undefined) updates.amount = amount;
+      if (status) updates.status = status;
+      
+      if (durationMonths) {
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+        updates.expires_at = expiresAt.toISOString();
+      }
+
+      const { data, error } = await supabase
+        .from('school_subscriptions')
+        .update(updates)
+        .eq('id', subscriptionId)
+        .select(`*, schools (id, name)`)
+        .single();
+
+      if (error) throw error;
+
+      // Update school subscription_active based on status
+      if (status) {
+        await supabase
+          .from('schools')
+          .update({ subscription_active: status === 'active' })
+          .eq('id', data.school_id);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['team-schools'] });
+      queryClient.invalidateQueries({ queryKey: ['team-stats'] });
+      toast.success('Subscription updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update subscription: ' + error.message);
+    },
+  });
+};
+
+export const useDeleteSubscription = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ subscriptionId, schoolId }: { subscriptionId: string; schoolId: string }) => {
+      const { error } = await supabase
+        .from('school_subscriptions')
+        .delete()
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+
+      // Update school subscription_active to false
+      await supabase
+        .from('schools')
+        .update({ subscription_active: false })
+        .eq('id', schoolId);
+
+      return { subscriptionId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['team-schools'] });
+      queryClient.invalidateQueries({ queryKey: ['team-stats'] });
+      toast.success('Subscription deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete subscription: ' + error.message);
+    },
+  });
+};
+
 export const useSupportTickets = () => {
   return useQuery({
     queryKey: ['support-tickets'],

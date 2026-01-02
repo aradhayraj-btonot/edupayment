@@ -19,6 +19,8 @@ import {
   useAllPayments,
   useAllSubscriptions,
   useCreateCustomSubscription,
+  useUpdateSubscription,
+  useDeleteSubscription,
   useCreateAdmin,
   useCreateSchoolWithAdmins,
   type AdminInput,
@@ -42,6 +44,9 @@ import {
   HeadphonesIcon,
   Settings,
   RefreshCw,
+  Edit,
+  Trash2,
+  Package,
 } from 'lucide-react';
 import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { format } from 'date-fns';
@@ -80,8 +85,22 @@ const TeamDashboard = () => {
   const { data: payments, isLoading: paymentsLoading } = useAllPayments();
   const { data: subscriptions, isLoading: subscriptionsLoading } = useAllSubscriptions();
   const createSubscription = useCreateCustomSubscription();
+  const updateSubscription = useUpdateSubscription();
+  const deleteSubscription = useDeleteSubscription();
   const createAdmin = useCreateAdmin();
   const createSchoolWithAdmins = useCreateSchoolWithAdmins();
+  
+  // Edit subscription state
+  const [editSubscriptionDialogOpen, setEditSubscriptionDialogOpen] = useState(false);
+  const [editingSubscription, setEditingSubscription] = useState<any>(null);
+  const [editPlan, setEditPlan] = useState<'starter' | 'professional' | 'enterprise'>('starter');
+  const [editAmount, setEditAmount] = useState('');
+  const [editDuration, setEditDuration] = useState('12');
+  const [editStatus, setEditStatus] = useState<'active' | 'expired' | 'cancelled' | 'pending'>('active');
+  
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [subscriptionToDelete, setSubscriptionToDelete] = useState<any>(null);
 
   const handleLogout = async () => {
     await signOut();
@@ -175,6 +194,46 @@ const TeamDashboard = () => {
     });
   };
 
+  const handleOpenEditSubscription = (subscription: any) => {
+    setEditingSubscription(subscription);
+    setEditPlan(subscription.plan);
+    setEditAmount(subscription.amount?.toString() || '');
+    setEditStatus(subscription.status);
+    setEditDuration('12');
+    setEditSubscriptionDialogOpen(true);
+  };
+
+  const handleUpdateSubscription = () => {
+    if (!editingSubscription) return;
+
+    updateSubscription.mutate({
+      subscriptionId: editingSubscription.id,
+      plan: editPlan,
+      amount: parseFloat(editAmount),
+      durationMonths: parseInt(editDuration),
+      status: editStatus,
+    }, {
+      onSuccess: () => {
+        setEditSubscriptionDialogOpen(false);
+        setEditingSubscription(null);
+      }
+    });
+  };
+
+  const handleDeleteSubscription = () => {
+    if (!subscriptionToDelete) return;
+
+    deleteSubscription.mutate({
+      subscriptionId: subscriptionToDelete.id,
+      schoolId: subscriptionToDelete.school_id,
+    }, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        setSubscriptionToDelete(null);
+      }
+    });
+  };
+
   const filteredParents = parents?.filter(p =>
     p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -243,9 +302,10 @@ const TeamDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full max-w-4xl">
+          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schools">Schools</TabsTrigger>
+            <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             <TabsTrigger value="parents">Parents</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
@@ -602,6 +662,259 @@ const TeamDashboard = () => {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Subscriptions Tab */}
+          <TabsContent value="subscriptions">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    Custom Subscriptions
+                  </CardTitle>
+                  <CardDescription>Manage all custom subscription plans created for schools</CardDescription>
+                </div>
+                <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Custom Plan
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create Custom Subscription</DialogTitle>
+                      <DialogDescription>
+                        Grant a custom subscription to a school with a custom price.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label>Select School</Label>
+                        <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a school" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {schools?.map((school) => (
+                              <SelectItem key={school.id} value={school.id}>
+                                {school.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Plan Type</Label>
+                        <Select value={customPlan} onValueChange={(v) => setCustomPlan(v as any)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="starter">Starter</SelectItem>
+                            <SelectItem value="professional">Professional</SelectItem>
+                            <SelectItem value="enterprise">Enterprise</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Custom Amount (₹)</Label>
+                        <Input
+                          type="number"
+                          value={customAmount}
+                          onChange={(e) => setCustomAmount(e.target.value)}
+                          placeholder="Enter amount"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Duration (months)</Label>
+                        <Select value={customDuration} onValueChange={setCustomDuration}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 Month</SelectItem>
+                            <SelectItem value="3">3 Months</SelectItem>
+                            <SelectItem value="6">6 Months</SelectItem>
+                            <SelectItem value="12">12 Months</SelectItem>
+                            <SelectItem value="24">24 Months</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button 
+                        className="w-full" 
+                        onClick={handleCreateSubscription}
+                        disabled={createSubscription.isPending}
+                      >
+                        {createSubscription.isPending ? 'Creating...' : 'Create Subscription'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>School</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Starts</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {subscriptionsLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center">Loading...</TableCell>
+                      </TableRow>
+                    ) : subscriptions?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center">No subscriptions found</TableCell>
+                      </TableRow>
+                    ) : (
+                      subscriptions?.map((sub) => (
+                        <TableRow key={sub.id}>
+                          <TableCell className="font-medium">{sub.schools?.name || 'Unknown'}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">{sub.plan}</Badge>
+                          </TableCell>
+                          <TableCell className="font-bold">{formatCurrency(sub.amount)}</TableCell>
+                          <TableCell>
+                            <Badge variant={sub.status === 'active' ? 'default' : sub.status === 'pending' ? 'secondary' : 'destructive'}>
+                              {sub.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{sub.starts_at ? format(new Date(sub.starts_at), 'PP') : '-'}</TableCell>
+                          <TableCell>{sub.expires_at ? format(new Date(sub.expires_at), 'PP') : '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleOpenEditSubscription(sub)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => {
+                                  setSubscriptionToDelete(sub);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Edit Subscription Dialog */}
+            <Dialog open={editSubscriptionDialogOpen} onOpenChange={setEditSubscriptionDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Subscription</DialogTitle>
+                  <DialogDescription>
+                    Update subscription for {editingSubscription?.schools?.name}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Plan Type</Label>
+                    <Select value={editPlan} onValueChange={(v) => setEditPlan(v as any)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="starter">Starter</SelectItem>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="enterprise">Enterprise</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Amount (₹)</Label>
+                    <Input
+                      type="number"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value)}
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={editStatus} onValueChange={(v) => setEditStatus(v as any)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="expired">Expired</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Extend Duration (months from now)</Label>
+                    <Select value={editDuration} onValueChange={setEditDuration}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 Month</SelectItem>
+                        <SelectItem value="3">3 Months</SelectItem>
+                        <SelectItem value="6">6 Months</SelectItem>
+                        <SelectItem value="12">12 Months</SelectItem>
+                        <SelectItem value="24">24 Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    onClick={handleUpdateSubscription}
+                    disabled={updateSubscription.isPending}
+                  >
+                    {updateSubscription.isPending ? 'Updating...' : 'Update Subscription'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Subscription</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete the subscription for {subscriptionToDelete?.schools?.name}? 
+                    This will deactivate their access to the platform.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleDeleteSubscription}
+                    disabled={deleteSubscription.isPending}
+                  >
+                    {deleteSubscription.isPending ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Parents Tab */}
