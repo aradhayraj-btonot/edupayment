@@ -1,10 +1,11 @@
+// Updated to support pending custom subscriptions
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, CreditCard, Clock, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { useIsSubscriptionActive, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useIsSubscriptionActive, PLAN_DETAILS, Subscription } from "@/hooks/useSubscription";
 import { SubscriptionPaymentDialog } from "./SubscriptionPaymentDialog";
 import { useState } from "react";
 
@@ -33,9 +34,11 @@ export function SubscriptionStatus({ schoolId }: SubscriptionStatusProps) {
   const totalDays = 30;
   const progressPercent = subscription ? (daysRemaining / totalDays) * 100 : 0;
 
+  const isPending = subscription?.status === 'pending';
+
   return (
     <>
-      <Card className={`${!isActive && subscription ? "border-destructive" : ""}`}>
+      <Card className={`${!isActive && subscription ? "border-destructive" : ""} ${isPending ? "border-warning" : ""}`}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -43,8 +46,8 @@ export function SubscriptionStatus({ schoolId }: SubscriptionStatusProps) {
               Subscription Status
             </span>
             {subscription && (
-              <Badge variant={isActive ? "success" : "destructive"}>
-                {isActive ? "Active" : "Expired"}
+              <Badge variant={isActive ? "success" : isPending ? "warning" : "destructive"}>
+                {isActive ? "Active" : isPending ? "Pending Payment" : "Expired"}
               </Badge>
             )}
           </CardTitle>
@@ -65,14 +68,49 @@ export function SubscriptionStatus({ schoolId }: SubscriptionStatusProps) {
                 Subscribe Now
               </Button>
             </div>
+          ) : isPending ? (
+            // Pending payment - custom plan created by team
+            <div className="space-y-4">
+              <div className="text-center py-4 space-y-4">
+                <Clock className="w-12 h-12 text-warning mx-auto" />
+                <div>
+                  <h3 className="font-semibold text-lg">Payment Required</h3>
+                  <p className="text-sm text-muted-foreground">
+                    A custom subscription has been created for your school. Please complete the payment to activate.
+                  </p>
+                </div>
+              </div>
+
+              {/* Plan Info */}
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">Custom Plan</p>
+                  <p className="text-xl font-bold">{planDetails?.name || 'Enterprise'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Amount Due</p>
+                  <p className="text-2xl font-bold text-primary">₹{subscription.amount.toLocaleString("en-IN")}</p>
+                </div>
+              </div>
+
+              {/* Pay Now Button */}
+              <Button 
+                onClick={() => setPaymentDialogOpen(true)} 
+                className="w-full gap-2"
+                size="lg"
+              >
+                <CreditCard className="w-4 h-4" />
+                Pay ₹{subscription.amount.toLocaleString("en-IN")} Now
+              </Button>
+            </div>
           ) : (
-            // Has subscription
+            // Has active/expired subscription
             <div className="space-y-4">
               {/* Plan Info */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Plan</p>
-                  <p className="text-xl font-bold">{planDetails?.name}</p>
+                  <p className="text-xl font-bold">{planDetails?.name || subscription.plan}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Amount</p>
@@ -155,6 +193,7 @@ export function SubscriptionStatus({ schoolId }: SubscriptionStatusProps) {
         onOpenChange={setPaymentDialogOpen}
         schoolId={schoolId}
         currentPlan={subscription?.plan}
+        pendingSubscription={isPending ? subscription : undefined}
       />
     </>
   );

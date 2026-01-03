@@ -12,12 +12,13 @@ const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
 const PLAN_PRICES = {
   starter: 99900, // ₹999 in paise
   professional: 699900, // ₹6999 in paise
-  enterprise: 0, // Custom pricing
+  enterprise: 0, // Custom pricing - will be fetched from subscription
 };
 
 interface CreateOrderRequest {
   school_id: string;
   plan: "starter" | "professional" | "enterprise";
+  custom_amount?: number; // Custom amount in rupees (for pending custom subscriptions)
 }
 
 interface VerifyPaymentRequest {
@@ -26,6 +27,7 @@ interface VerifyPaymentRequest {
   razorpay_signature: string;
   school_id: string;
   plan: "starter" | "professional" | "enterprise";
+  custom_amount?: number; // Custom amount in rupees
 }
 
 // Create Razorpay order
@@ -107,18 +109,36 @@ const handler = async (req: Request): Promise<Response> => {
     const action = url.pathname.split("/").pop();
 
     if (action === "create-order") {
-      const { school_id, plan }: CreateOrderRequest = await req.json();
+      const { school_id, plan, custom_amount }: CreateOrderRequest = await req.json();
       
-      console.log(`Creating order for school ${school_id}, plan: ${plan}`);
+      console.log(`Creating order for school ${school_id}, plan: ${plan}, custom_amount: ${custom_amount}`);
       
-      if (plan === "enterprise") {
-        return new Response(
-          JSON.stringify({ error: "Enterprise plan requires custom pricing. Please contact sales." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      let amount: number;
+      
+      if (custom_amount) {
+        // Custom amount provided (in rupees) - convert to paise
+        amount = Math.round(custom_amount * 100);
+      } else if (plan === "enterprise") {
+        // Check if there's a pending subscription with custom amount
+        const { data: pendingSub } = await supabase
+          .from("school_subscriptions")
+          .select("amount")
+          .eq("school_id", school_id)
+          .eq("status", "pending")
+          .maybeSingle();
+        
+        if (pendingSub && pendingSub.amount > 0) {
+          amount = Math.round(pendingSub.amount * 100); // Convert to paise
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Enterprise plan requires custom pricing. Please contact sales." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        amount = PLAN_PRICES[plan];
       }
 
-      const amount = PLAN_PRICES[plan];
       const order = await createRazorpayOrder(amount, school_id, plan);
       
       console.log("Razorpay order created:", order.id);
@@ -141,9 +161,10 @@ const handler = async (req: Request): Promise<Response> => {
         razorpay_signature,
         school_id,
         plan,
+        custom_amount,
       }: VerifyPaymentRequest = await req.json();
 
-      console.log(`Verifying payment for school ${school_id}`);
+      console.log(`Verifying payment for school ${school_id}, custom_amount: ${custom_amount}`);
 
       // Verify signature
       const isValid = await verifyPaymentSignature(
@@ -160,7 +181,14 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      const amount = PLAN_PRICES[plan as keyof typeof PLAN_PRICES] / 100; // Convert from paise to rupees
+      // For custom amounts, use that; otherwise use plan prices
+      let amount: number;
+      if (custom_amount) {
+        amount = custom_amount;
+      } else {
+        amount = PLAN_PRICES[plan as keyof typeof PLAN_PRICES] / 100;
+      }
+      
       const startsAt = new Date();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30); // 30 days subscription
