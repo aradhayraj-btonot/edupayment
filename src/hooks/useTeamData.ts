@@ -206,6 +206,7 @@ export const useCreateCustomSubscription = () => {
       amount: number;
       durationMonths: number;
     }) => {
+      // Create subscription with PENDING status - requires Razorpay payment to activate
       const startsAt = new Date();
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
@@ -216,20 +217,20 @@ export const useCreateCustomSubscription = () => {
           school_id: schoolId,
           plan,
           amount,
-          status: 'active',
+          status: 'pending', // Pending until school pays via Razorpay
           starts_at: startsAt.toISOString(),
           expires_at: expiresAt.toISOString(),
-          razorpay_payment_id: `TEAM_CUSTOM_${Date.now()}`,
+          razorpay_payment_id: null, // Will be set after payment
         }, { onConflict: 'school_id' })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Update school subscription status
+      // Keep school subscription_active as false until payment
       await supabase
         .from('schools')
-        .update({ subscription_active: true })
+        .update({ subscription_active: false })
         .eq('id', schoolId);
 
       return data;
@@ -238,7 +239,7 @@ export const useCreateCustomSubscription = () => {
       queryClient.invalidateQueries({ queryKey: ['team-subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['team-schools'] });
       queryClient.invalidateQueries({ queryKey: ['team-stats'] });
-      toast.success('Custom subscription created successfully');
+      toast.success('Custom subscription created - awaiting school payment');
     },
     onError: (error) => {
       toast.error('Failed to create subscription: ' + error.message);

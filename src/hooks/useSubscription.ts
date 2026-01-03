@@ -87,14 +87,18 @@ export function useIsSubscriptionActive(schoolId: string | undefined) {
   };
 }
 
-// Create Razorpay order
+// Create Razorpay order (supports custom amounts)
 export function useCreateSubscriptionOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ schoolId, plan }: { schoolId: string; plan: "starter" | "professional" }) => {
+    mutationFn: async ({ schoolId, plan, customAmount }: { 
+      schoolId: string; 
+      plan: "starter" | "professional" | "enterprise";
+      customAmount?: number;
+    }) => {
       const { data, error } = await supabase.functions.invoke("razorpay-subscription/create-order", {
-        body: { school_id: schoolId, plan },
+        body: { school_id: schoolId, plan, custom_amount: customAmount },
       });
 
       if (error) throw error;
@@ -116,7 +120,8 @@ export function useVerifySubscriptionPayment() {
       razorpay_order_id: string;
       razorpay_signature: string;
       school_id: string;
-      plan: "starter" | "professional";
+      plan: "starter" | "professional" | "enterprise";
+      custom_amount?: number;
     }) => {
       const { data: response, error } = await supabase.functions.invoke("razorpay-subscription/verify-payment", {
         body: data,
