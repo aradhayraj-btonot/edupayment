@@ -318,8 +318,11 @@ const TermsAndConditions = () => {
                 <ul className="list-none space-y-2">
                   <li><strong>Company:</strong> Btonot</li>
                   <li><strong>Founder:</strong> Aradhay Raj</li>
-                  <li><strong>Email:</strong> support@edupay.com</li>
-                  <li><strong>Website:</strong> https://edupay.com</li>
+                  <li><strong>Email:</strong> btonot.in@gmail.com</li>
+                  <li><strong>Support:</strong> aradhayrajbusiness@gmail.com</li>
+                  <li><strong>Website:</strong> edupayment.online</li>
+                  <li><strong>Phone:</strong> +91 9708565215</li>
+                  <li><strong>Address:</strong> Ramagarh, Jharkhand, India</li>
                 </ul>
               </div>
             </section>
