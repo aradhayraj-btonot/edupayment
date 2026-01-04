@@ -207,8 +207,10 @@ const Security = () => {
                   please contact us immediately:
                 </p>
                 <ul className="text-muted-foreground mb-0">
-                  <li><strong>Email:</strong> security@feesync.com</li>
-                  <li><strong>Phone:</strong> Contact your school administrator</li>
+                  <li><strong>Email:</strong> btonot.in@gmail.com</li>
+                  <li><strong>Support:</strong> aradhayrajbusiness@gmail.com</li>
+                  <li><strong>Phone:</strong> +91 9708565215</li>
+                  <li><strong>Website:</strong> edupayment.online</li>
                 </ul>
                 <p className="text-sm text-muted-foreground mt-4 mb-0">
                   We take all security reports seriously and will respond within 24 hours.

@@ -258,7 +258,7 @@ const PrivacyPolicy = () => {
               </p>
               <div className="bg-card border rounded-lg p-4 text-muted-foreground">
                 <p className="mb-1"><strong>Grievance Officer:</strong> Privacy Officer</p>
-                <p className="mb-1"><strong>Email:</strong> privacy@feesync.com</p>
+                <p className="mb-1"><strong>Email:</strong> btonot.in@gmail.com</p>
                 <p className="mb-0"><strong>Response Time:</strong> Within 48 hours of receiving the grievance</p>
               </div>
             </section>
@@ -270,9 +270,11 @@ const PrivacyPolicy = () => {
                 data practices, please contact us:
               </p>
               <div className="bg-card border rounded-lg p-4 text-muted-foreground">
-                <p className="mb-1"><strong>Email:</strong> privacy@feesync.com</p>
-                <p className="mb-1"><strong>Support:</strong> support@feesync.com</p>
-                <p className="mb-0"><strong>Address:</strong> Contact your school administrator for physical address</p>
+                <p className="mb-1"><strong>Email:</strong> btonot.in@gmail.com</p>
+                <p className="mb-1"><strong>Support:</strong> aradhayrajbusiness@gmail.com</p>
+                <p className="mb-1"><strong>Website:</strong> edupayment.online</p>
+                <p className="mb-1"><strong>Phone:</strong> +91 9708565215</p>
+                <p className="mb-0"><strong>Address:</strong> Ramagarh, Jharkhand, India</p>
               </div>
             </section>
 
