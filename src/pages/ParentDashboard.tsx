@@ -35,6 +35,7 @@ import { useParentPayments, useCreatePayment, useUploadScreenshot } from "@/hook
 import { useStudentFees } from "@/hooks/useFees";
 import { useSchools } from "@/hooks/useSchools";
 import { useParentNotifications, useNotificationReads, useMarkNotificationRead } from "@/hooks/useNotifications";
+import { PushNotificationToggle } from "@/components/notifications/PushNotificationToggle";
 import { useIsSubscriptionActive } from "@/hooks/useSubscription";
 import { format } from "date-fns";
 import { QrCode, Copy, ExternalLink } from "lucide-react";
@@ -939,6 +940,9 @@ const ParentDashboard = () => {
 
           {activeTab === "settings" && (
             <div className="space-y-6">
+              {/* Push Notifications */}
+              <PushNotificationToggle schoolId={selectedStudent?.school_id} variant="card" />
+
               {/* Theme Settings */}
               <Card>
                 <CardHeader>
