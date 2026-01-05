@@ -70,6 +70,8 @@ import { useSchools, useCreateSchool, useUpdateSchool } from "@/hooks/useSchools
 import { useAdminSchool, useUpdateAdminSchool } from "@/hooks/useAdminSchool";
 import { useFeeStructures, useCreateFeeStructure, useUpdateFeeStructure, useDeleteFeeStructure, useAllStudentFees } from "@/hooks/useFees";
 import { useSchoolNotifications, useSendNotification, useSendReceipt } from "@/hooks/useNotifications";
+import { PushNotificationToggle } from "@/components/notifications/PushNotificationToggle";
+import { SendPushNotificationDialog } from "@/components/notifications/SendPushNotificationDialog";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1525,9 +1527,20 @@ const AdminDashboard = () => {
                           <strong>Note:</strong> This notification will be sent to all {students.length} students' linked parents via email.
                         </p>
                       </div>
-                      <Button type="submit" className="w-full" disabled={sendNotification.isPending}>
-                        {sendNotification.isPending ? "Sending..." : "Send Notification"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button type="submit" className="flex-1" disabled={sendNotification.isPending}>
+                          {sendNotification.isPending ? "Sending..." : "Send Email Notification"}
+                        </Button>
+                        <SendPushNotificationDialog 
+                          schoolId={selectedSchool.id}
+                          trigger={
+                            <Button type="button" variant="outline" className="gap-2">
+                              <Bell className="w-4 h-4" />
+                              Push
+                            </Button>
+                          }
+                        />
+                      </div>
                     </form>
                   )}
                 </CardContent>
@@ -1831,10 +1844,10 @@ const AdminDashboard = () => {
                   <CardHeader>
                     <CardTitle className="text-lg font-display flex items-center gap-2">
                       <Sun className="w-5 h-5" />
-                      Appearance
+                      Appearance & Notifications
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
                       <div>
                         <p className="font-medium text-foreground">Dark Mode</p>
@@ -1859,10 +1872,14 @@ const AdminDashboard = () => {
                         <Moon className="w-4 h-4 text-muted-foreground" />
                       </div>
                     </div>
+                    
+                    {/* Push Notifications */}
+                    <div className="p-4 bg-secondary/50 rounded-lg">
+                      <PushNotificationToggle schoolId={selectedSchool?.id} variant="card" />
+                    </div>
                   </CardContent>
                 </Card>
               )}
-
               {!selectedSchool && settingsTab === 'school' && (
                 <Card>
                   <CardContent className="py-12">

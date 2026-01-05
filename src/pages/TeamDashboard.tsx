@@ -48,6 +48,8 @@ import {
   Trash2,
   Package,
 } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import { SendPushNotificationDialog } from '@/components/notifications/SendPushNotificationDialog';
 import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -302,13 +304,14 @@ const TeamDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-8 w-full max-w-6xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schools">Schools</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             <TabsTrigger value="parents">Parents</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
           </TabsList>
 
@@ -1180,6 +1183,35 @@ const TeamDashboard = () => {
                     )}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Push Notifications
+                </CardTitle>
+                <CardDescription>
+                  Send instant push notifications to all subscribed users across all schools.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-secondary/50 rounded-lg p-4">
+                    <h4 className="font-medium mb-2">About Push Notifications</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Push notifications appear at the OS level, even when the browser is closed</li>
+                      <li>• Users must enable notifications in their browser to receive them</li>
+                      <li>• Works on Chrome, Edge, Firefox (desktop and Android)</li>
+                      <li>• Notifications are sent only to users who have subscribed</li>
+                    </ul>
+                  </div>
+                  <SendPushNotificationDialog />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
