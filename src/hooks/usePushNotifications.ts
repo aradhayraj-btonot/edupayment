@@ -281,22 +281,48 @@ export function useSendPushNotification() {
         body: params,
       });
 
+      console.log('[Push] Response:', { data, error });
+
       if (error) {
-        throw error;
+        // Check if it's a FunctionsHttpError with a response body
+        const errorMessage = error.message || 'Failed to send notification';
+        throw new Error(errorMessage);
       }
 
-      toast({
-        title: 'Notification Sent',
-        description: `Successfully sent to ${data.sent || 0} recipients.`,
-      });
+      // Check if response indicates no subscriptions
+      if (data?.sent === 0) {
+        toast({
+          title: 'No Recipients',
+          description: data?.message || 'No users have enabled push notifications yet.',
+        });
+      } else {
+        toast({
+          title: 'Notification Sent',
+          description: `Successfully sent to ${data?.sent || 0} recipients.`,
+        });
+      }
 
       setIsLoading(false);
       return data;
     } catch (error) {
       console.error('[Push] Send notification failed:', error);
+      
+      // Parse error message for better user feedback
+      let errorMessage = 'Failed to send notification.';
+      if (error instanceof Error) {
+        // Check for common error patterns
+        if (error.message.includes('non-2xx')) {
+          errorMessage = 'Server error. Please try again.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Check your connection.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: 'Failed to Send',
-        description: error instanceof Error ? error.message : 'Failed to send notification.',
+        title: 'Failed to send notification',
+        description: errorMessage,
         variant: 'destructive',
       });
       setIsLoading(false);
