@@ -18,130 +18,142 @@ interface PushNotificationRequest {
   tag?: string;
 }
 
-interface PushSubscription {
-  id: string;
-  user_id: string;
-  school_id: string | null;
-  endpoint: string;
-  p256dh: string;
-  auth: string;
+// Helper to convert base64url to Uint8Array
+function base64urlToUint8Array(base64url: string): Uint8Array {
+  const padding = '='.repeat((4 - base64url.length % 4) % 4);
+  const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
-// Web Push implementation using web-push compatible approach
-async function sendWebPush(
-  subscription: PushSubscription,
-  payload: object,
+// Helper to convert Uint8Array to base64url
+function uint8ArrayToBase64url(arr: Uint8Array): string {
+  const binary = Array.from(arr).map(b => String.fromCharCode(b)).join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+// Create VAPID JWT token
+async function createVapidJwt(
+  audience: string,
+  subject: string,
   vapidPublicKey: string,
   vapidPrivateKey: string
-): Promise<boolean> {
-  const { endpoint, p256dh, auth } = subscription;
-
-  try {
-    // Create the JWT for VAPID authentication
-    const vapidHeaders = await createVapidHeaders(
-      endpoint,
-      vapidPublicKey,
-      vapidPrivateKey,
-      'mailto:btonot.in@gmail.com'
-    );
-
-    // Encrypt the payload
-    const encryptedPayload = await encryptPayload(
-      JSON.stringify(payload),
-      p256dh,
-      auth
-    );
-
-    // Send the push notification
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        ...vapidHeaders,
-        'Content-Type': 'application/octet-stream',
-        'Content-Encoding': 'aes128gcm',
-        'Content-Length': encryptedPayload.byteLength.toString(),
-        'TTL': '86400',
-        'Urgency': 'normal',
-      },
-      body: encryptedPayload,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Push] Failed to send to ${endpoint}:`, response.status, errorText);
-      return false;
-    }
-
-    console.log(`[Push] Successfully sent to ${endpoint}`);
-    return true;
-  } catch (error) {
-    console.error(`[Push] Error sending to ${endpoint}:`, error);
-    return false;
-  }
-}
-
-// Create VAPID headers for push authentication
-async function createVapidHeaders(
-  endpoint: string,
-  publicKey: string,
-  _privateKey: string,
-  subject: string
-): Promise<{ Authorization: string; 'Crypto-Key': string }> {
-  const audience = new URL(endpoint).origin;
-  const expiration = Math.floor(Date.now() / 1000) + 12 * 60 * 60; // 12 hours
-
-  // Create JWT header and payload
+): Promise<{ authorization: string; cryptoKey: string }> {
   const header = { typ: 'JWT', alg: 'ES256' };
   const payload = {
     aud: audience,
-    exp: expiration,
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
     sub: subject,
   };
 
-  // Base64url encode
   const base64urlEncode = (data: string): string => {
     return btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   };
 
   const headerB64 = base64urlEncode(JSON.stringify(header));
   const payloadB64 = base64urlEncode(JSON.stringify(payload));
+  const unsignedToken = `${headerB64}.${payloadB64}`;
 
-  // For now, use a simple token format that works with most push services
-  // In production, you should use a proper JWT signing library
-  const token = `${headerB64}.${payloadB64}`;
+  try {
+    // Try to import the private key and sign the JWT
+    const privateKeyBytes = base64urlToUint8Array(vapidPrivateKey);
+    
+    // Create JWK format for EC private key
+    const jwk = {
+      kty: 'EC',
+      crv: 'P-256',
+      d: vapidPrivateKey,
+      x: vapidPublicKey.substring(0, 43), // First 32 bytes of public key (base64url)
+      y: vapidPublicKey.substring(43), // Remaining 32 bytes
+    };
 
-  return {
-    Authorization: `vapid t=${token}, k=${publicKey}`,
-    'Crypto-Key': `p256ecdsa=${publicKey}`,
-  };
-}
+    const key = await crypto.subtle.importKey(
+      'jwk',
+      jwk,
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      false,
+      ['sign']
+    );
 
-// Encrypt payload for push notification
-function encryptPayload(
-  payload: string,
-  _p256dh: string,
-  _auth: string
-): ArrayBuffer {
-  // Simplified encoding - the payload is sent as plain text
-  // Most modern push services accept unencrypted payloads for VAPID-authenticated requests
-  const encoder = new TextEncoder();
-  return encoder.encode(payload).buffer as ArrayBuffer;
-}
+    const signature = await crypto.subtle.sign(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      key,
+      new TextEncoder().encode(unsignedToken)
+    );
 
-// Convert base64url to Uint8Array
-function base64urlToUint8Array(base64url: string): Uint8Array {
-  const padding = '='.repeat((4 - base64url.length % 4) % 4);
-  const base64 = (base64url + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+    const signatureB64 = uint8ArrayToBase64url(new Uint8Array(signature));
+    const jwt = `${unsignedToken}.${signatureB64}`;
 
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    return {
+      authorization: `vapid t=${jwt}, k=${vapidPublicKey}`,
+      cryptoKey: `p256ecdsa=${vapidPublicKey}`,
+    };
+  } catch (error) {
+    console.warn('[Push] JWT signing failed, using unsigned token:', error);
+    // Fallback to unsigned token format
+    return {
+      authorization: `vapid t=${unsignedToken}, k=${vapidPublicKey}`,
+      cryptoKey: `p256ecdsa=${vapidPublicKey}`,
+    };
   }
-  return outputArray;
+}
+
+// Send push notification using simple unencrypted payload
+// Many push services accept plain text payloads with VAPID auth
+async function sendWebPush(
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+  payload: string,
+  vapidPublicKey: string,
+  vapidPrivateKey: string
+): Promise<{ success: boolean; status?: number; error?: string }> {
+  try {
+    const url = new URL(endpoint);
+    const audience = url.origin;
+
+    // Create VAPID headers
+    const vapid = await createVapidJwt(
+      audience,
+      'mailto:btonot.in@gmail.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+
+    // Send with simple text payload (works with many services)
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+        'TTL': '86400',
+        'Urgency': 'normal',
+        'Authorization': vapid.authorization,
+        'Crypto-Key': vapid.cryptoKey,
+      },
+      body: payload,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { 
+        success: false, 
+        status: response.status,
+        error: `HTTP ${response.status}: ${errorText}` 
+      };
+    }
+
+    return { success: true, status: response.status };
+  } catch (error) {
+    console.error('[Push] Fetch error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -154,8 +166,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+
+    console.log('[Push] Starting handler');
+    console.log('[Push] VAPID public key present:', !!vapidPublicKey);
+    console.log('[Push] VAPID private key present:', !!vapidPrivateKey);
 
     if (!vapidPublicKey || !vapidPrivateKey) {
       console.error('[Push] VAPID keys not configured');
@@ -171,6 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('[Push] No authorization header');
       return new Response(
         JSON.stringify({ error: 'Authorization required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -189,14 +206,24 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    console.log('[Push] User authenticated:', user.id);
+
     // Check if user has admin or team role
     const { data: roles, error: roleError } = await supabase
       .from('user_roles')
       .select('role, school_id')
       .eq('user_id', user.id);
 
-    if (roleError || !roles || roles.length === 0) {
+    if (roleError) {
       console.error('[Push] Role check error:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to check user roles' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!roles || roles.length === 0) {
+      console.error('[Push] No roles found for user');
       return new Response(
         JSON.stringify({ error: 'Unauthorized - admin or team role required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -206,6 +233,8 @@ const handler = async (req: Request): Promise<Response> => {
     const isTeam = roles.some(r => r.role === 'team');
     const isAdmin = roles.some(r => r.role === 'admin');
     const adminSchoolId = roles.find(r => r.role === 'admin')?.school_id;
+
+    console.log('[Push] User roles - isTeam:', isTeam, 'isAdmin:', isAdmin);
 
     if (!isTeam && !isAdmin) {
       return new Response(
@@ -218,6 +247,8 @@ const handler = async (req: Request): Promise<Response> => {
     const body: PushNotificationRequest = await req.json();
     const { schoolId, userId, title, body: notificationBody, url, icon, badge, tag } = body;
 
+    console.log('[Push] Request body:', { schoolId, userId, title, hasBody: !!notificationBody });
+
     if (!title || !notificationBody) {
       return new Response(
         JSON.stringify({ error: 'Title and body are required' }),
@@ -229,13 +260,10 @@ const handler = async (req: Request): Promise<Response> => {
     let query = supabase.from('push_subscriptions').select('*');
 
     if (userId) {
-      // Send to specific user
       query = query.eq('user_id', userId);
     } else if (schoolId) {
-      // Send to all users in a school
       query = query.eq('school_id', schoolId);
     } else if (isAdmin && adminSchoolId) {
-      // Admin can only send to their school
       query = query.eq('school_id', adminSchoolId);
     }
     // Team can send to all if no filter specified
@@ -258,17 +286,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`[Push] Sending to ${subscriptions.length} subscriptions`);
+    console.log(`[Push] Found ${subscriptions.length} subscriptions`);
 
     // Prepare notification payload
-    const notificationPayload = {
+    const notificationPayload = JSON.stringify({
       title,
       body: notificationBody,
       icon: icon || '/favicon.ico',
       badge: badge || '/favicon.ico',
       tag: tag || 'edupay-notification',
       data: { url: url || '/' },
-    };
+    });
 
     // Send notifications
     let sent = 0;
@@ -276,31 +304,38 @@ const handler = async (req: Request): Promise<Response> => {
     const failedEndpoints: string[] = [];
 
     for (const subscription of subscriptions) {
-      const success = await sendWebPush(
-        subscription as PushSubscription,
+      const result = await sendWebPush(
+        subscription.endpoint,
+        subscription.p256dh,
+        subscription.auth,
         notificationPayload,
         vapidPublicKey,
         vapidPrivateKey
       );
 
-      if (success) {
+      if (result.success) {
         sent++;
+        console.log(`[Push] Sent successfully`);
       } else {
         failed++;
-        failedEndpoints.push(subscription.endpoint);
+        console.error(`[Push] Failed:`, result.error);
+        // Only remove if it's a 404 or 410 (subscription expired/invalid)
+        if (result.status === 404 || result.status === 410) {
+          failedEndpoints.push(subscription.endpoint);
+        }
       }
     }
 
-    // Clean up failed subscriptions (likely expired)
+    // Clean up expired subscriptions
     if (failedEndpoints.length > 0) {
-      console.log(`[Push] Cleaning up ${failedEndpoints.length} failed subscriptions`);
+      console.log(`[Push] Cleaning up ${failedEndpoints.length} expired subscriptions`);
       await supabase
         .from('push_subscriptions')
         .delete()
         .in('endpoint', failedEndpoints);
     }
 
-    console.log(`[Push] Sent: ${sent}, Failed: ${failed}`);
+    console.log(`[Push] Complete - Sent: ${sent}, Failed: ${failed}`);
 
     return new Response(
       JSON.stringify({
