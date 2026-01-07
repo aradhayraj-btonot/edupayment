@@ -451,6 +451,58 @@ export const useDeleteSubscription = () => {
   });
 };
 
+export const useGrantFreeSubscription = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      schoolId,
+      durationMonths = 12,
+    }: {
+      schoolId: string;
+      durationMonths?: number;
+    }) => {
+      const startsAt = new Date();
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+
+      // Create or update subscription with active status and 0 amount
+      const { data, error } = await supabase
+        .from('school_subscriptions')
+        .upsert({
+          school_id: schoolId,
+          plan: 'enterprise',
+          amount: 0,
+          status: 'active',
+          starts_at: startsAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          razorpay_payment_id: 'free_grant',
+        }, { onConflict: 'school_id' })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Activate the school subscription
+      await supabase
+        .from('schools')
+        .update({ subscription_active: true })
+        .eq('id', schoolId);
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['team-schools'] });
+      queryClient.invalidateQueries({ queryKey: ['team-stats'] });
+      toast.success('Free subscription granted successfully!');
+    },
+    onError: (error) => {
+      toast.error('Failed to grant subscription: ' + error.message);
+    },
+  });
+};
+
 export const useSupportTickets = () => {
   return useQuery({
     queryKey: ['support-tickets'],
