@@ -41,22 +41,32 @@ export const useAllSchools = () => {
   return useQuery({
     queryKey: ['team-schools'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch schools
+      const { data: schools, error: schoolsError } = await supabase
         .from('schools')
-        .select(`
-          *,
-          school_subscriptions (
-            id,
-            plan,
-            status,
-            expires_at,
-            amount
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (schoolsError) throw schoolsError;
+
+      // Fetch all subscriptions
+      const { data: subscriptions, error: subError } = await supabase
+        .from('school_subscriptions')
+        .select('*');
+
+      if (subError) throw subError;
+
+      // Create a map of school_id to subscription
+      const subscriptionMap = new Map();
+      subscriptions?.forEach(sub => {
+        subscriptionMap.set(sub.school_id, sub);
+      });
+
+      // Merge schools with their subscriptions
+      return schools?.map(school => ({
+        ...school,
+        subscription: subscriptionMap.get(school.id) || null,
+      })) || [];
     },
   });
 };

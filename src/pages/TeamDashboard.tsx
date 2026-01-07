@@ -339,8 +339,8 @@ const TeamDashboard = () => {
                             <p className="font-medium">{school.name}</p>
                             <p className="text-xs text-muted-foreground">{school.email}</p>
                           </div>
-                          <Badge variant={school.school_subscriptions?.[0]?.status === 'active' ? 'default' : 'secondary'}>
-                            {school.school_subscriptions?.[0]?.status || 'No Subscription'}
+                          <Badge variant={school.subscription?.status === 'active' ? 'default' : 'secondary'}>
+                            {school.subscription?.status || 'No Subscription'}
                           </Badge>
                         </div>
                       ))}
@@ -648,20 +648,20 @@ const TeamDashboard = () => {
                           <TableCell>{school.email || '-'}</TableCell>
                           <TableCell>{school.phone || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant={school.school_subscriptions?.[0]?.status === 'active' ? 'default' : 'secondary'}>
-                              {school.school_subscriptions?.[0]?.plan || 'None'}
+                            <Badge variant={school.subscription?.status === 'active' ? 'default' : 'secondary'}>
+                              {school.subscription?.plan || 'None'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {school.school_subscriptions?.[0]?.expires_at 
-                              ? format(new Date(school.school_subscriptions[0].expires_at), 'PP')
+                            {school.subscription?.expires_at 
+                              ? format(new Date(school.subscription.expires_at), 'PP')
                               : '-'}
                           </TableCell>
                           <TableCell>
-                            {school.school_subscriptions?.[0]?.amount !== undefined
-                              ? school.school_subscriptions[0].amount === 0 
+                            {school.subscription?.amount !== undefined
+                              ? school.subscription.amount === 0 
                                 ? 'Free' 
-                                : formatCurrency(school.school_subscriptions[0].amount)
+                                : formatCurrency(school.subscription.amount)
                               : '-'}
                           </TableCell>
                           <TableCell>
@@ -669,11 +669,11 @@ const TeamDashboard = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => grantFreeSubscription.mutate({ schoolId: school.id })}
-                              disabled={grantFreeSubscription.isPending || school.school_subscriptions?.[0]?.status === 'active'}
+                              disabled={grantFreeSubscription.isPending || school.subscription?.status === 'active'}
                               className="gap-1"
                             >
                               <Gift className="w-3 h-3" />
-                              {school.school_subscriptions?.[0]?.status === 'active' ? 'Active' : 'Give Free'}
+                              {school.subscription?.status === 'active' ? 'Active' : 'Give Free'}
                             </Button>
                           </TableCell>
                         </TableRow>
