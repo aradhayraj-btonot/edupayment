@@ -21,6 +21,7 @@ import {
   useCreateCustomSubscription,
   useUpdateSubscription,
   useDeleteSubscription,
+  useGrantFreeSubscription,
   useCreateAdmin,
   useCreateSchoolWithAdmins,
   type AdminInput,
@@ -47,6 +48,7 @@ import {
   Edit,
   Trash2,
   Package,
+  Gift,
 } from 'lucide-react';
 import { Bell } from 'lucide-react';
 import { SendPushNotificationDialog } from '@/components/notifications/SendPushNotificationDialog';
@@ -89,6 +91,7 @@ const TeamDashboard = () => {
   const createSubscription = useCreateCustomSubscription();
   const updateSubscription = useUpdateSubscription();
   const deleteSubscription = useDeleteSubscription();
+  const grantFreeSubscription = useGrantFreeSubscription();
   const createAdmin = useCreateAdmin();
   const createSchoolWithAdmins = useCreateSchoolWithAdmins();
   
@@ -626,16 +629,17 @@ const TeamDashboard = () => {
                       <TableHead>Subscription</TableHead>
                       <TableHead>Expires</TableHead>
                       <TableHead>Amount</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {schoolsLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center">Loading...</TableCell>
+                        <TableCell colSpan={7} className="text-center">Loading...</TableCell>
                       </TableRow>
                     ) : schools?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center">No schools found</TableCell>
+                        <TableCell colSpan={7} className="text-center">No schools found</TableCell>
                       </TableRow>
                     ) : (
                       schools?.map((school) => (
@@ -654,9 +658,23 @@ const TeamDashboard = () => {
                               : '-'}
                           </TableCell>
                           <TableCell>
-                            {school.school_subscriptions?.[0]?.amount 
-                              ? formatCurrency(school.school_subscriptions[0].amount)
+                            {school.school_subscriptions?.[0]?.amount !== undefined
+                              ? school.school_subscriptions[0].amount === 0 
+                                ? 'Free' 
+                                : formatCurrency(school.school_subscriptions[0].amount)
                               : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => grantFreeSubscription.mutate({ schoolId: school.id })}
+                              disabled={grantFreeSubscription.isPending || school.school_subscriptions?.[0]?.status === 'active'}
+                              className="gap-1"
+                            >
+                              <Gift className="w-3 h-3" />
+                              {school.school_subscriptions?.[0]?.status === 'active' ? 'Active' : 'Give Free'}
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
