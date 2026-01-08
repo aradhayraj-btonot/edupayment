@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Send, Bell } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Send, Bell, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
 import { useSendPushNotification } from '@/hooks/usePushNotifications';
 
 interface SendPushNotificationDialogProps {
@@ -25,7 +27,41 @@ export function SendPushNotificationDialog({ schoolId, trigger }: SendPushNotifi
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [url, setUrl] = useState('');
+  const [recipientCount, setRecipientCount] = useState<number | null>(null);
+  const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
+
   const { sendNotification, isLoading } = useSendPushNotification();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const loadRecipients = async () => {
+      try {
+        setIsLoadingRecipients(true);
+
+        let query = supabase
+          .from('push_subscriptions')
+          .select('id', { count: 'exact', head: true });
+
+        if (schoolId) {
+          query = query.eq('school_id', schoolId);
+        }
+
+        const { count, error } = await query;
+        if (error) throw error;
+
+        setRecipientCount(count ?? 0);
+      } catch (e) {
+        // Avoid blocking sending; this is just a helper UI.
+        console.error('[Push] Failed to load recipient count:', e);
+        setRecipientCount(null);
+      } finally {
+        setIsLoadingRecipients(false);
+      }
+    };
+
+    loadRecipients();
+  }, [open, schoolId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,13 +105,32 @@ export function SendPushNotificationDialog({ schoolId, trigger }: SendPushNotifi
             <Bell className="h-5 w-5" />
             Send Push Notification
           </DialogTitle>
-          <DialogDescription>
-            Send an instant notification to all subscribed users
-            {schoolId ? ' in this school' : ''}.
+          <DialogDescription className="space-y-1">
+            <span>
+              Send an instant notification to all subscribed users
+              {schoolId ? ' in this school' : ''}.
+            </span>
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              {isLoadingRecipients
+                ? 'Checking recipients…'
+                : recipientCount === null
+                  ? 'Recipients: unknown'
+                  : `Subscribed devices: ${recipientCount}`}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {recipientCount === 0 && (
+              <Alert>
+                <AlertTitle>No recipients yet</AlertTitle>
+                <AlertDescription>
+                  Nobody has enabled push notifications. Ask users to open their dashboard settings and tap
+                  “Enable Notifications”. (Requires a supported browser and HTTPS.)
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="title">Title *</Label>
               <Input
