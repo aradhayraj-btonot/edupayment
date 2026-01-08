@@ -41,6 +41,36 @@ export function usePushNotifications(schoolId?: string) {
   // Check if push notifications are supported
   const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
+  const saveSubscriptionToDatabase = useCallback(
+    async (subscription: PushSubscription, regSchoolId?: string) => {
+      if (!user) return;
+
+      const subscriptionJson = subscription.toJSON();
+      const subscriptionData: PushSubscriptionData = {
+        endpoint: subscription.endpoint,
+        p256dh: subscriptionJson.keys?.p256dh || '',
+        auth: subscriptionJson.keys?.auth || '',
+      };
+
+      const { error } = await supabase.from('push_subscriptions').upsert(
+        {
+          user_id: user.id,
+          school_id: regSchoolId || null,
+          endpoint: subscriptionData.endpoint,
+          p256dh: subscriptionData.p256dh,
+          auth: subscriptionData.auth,
+          user_agent: navigator.userAgent,
+        },
+        {
+          onConflict: 'endpoint',
+        }
+      );
+
+      if (error) throw error;
+    },
+    [user, schoolId]
+  );
+
   // Initialize and check current state
   useEffect(() => {
     if (!isSupported) {
@@ -58,17 +88,48 @@ export function usePushNotifications(schoolId?: string) {
         setRegistration(reg);
         console.log('[Push] Service worker registered:', reg);
 
-        // Check if already subscribed
+        // Check if already subscribed (browser-level)
         const subscription = await reg.pushManager.getSubscription();
-        setIsSubscribed(!!subscription);
         console.log('[Push] Current subscription:', subscription);
+
+        // If the browser says we're subscribed but permission is not granted,
+        // clean it up to avoid a false "enabled" UI state.
+        if (subscription && Notification.permission !== 'granted') {
+          try {
+            await subscription.unsubscribe();
+          } catch {
+            // ignore
+          }
+          setIsSubscribed(false);
+          return;
+        }
+
+        setIsSubscribed(!!subscription);
+
+        // IMPORTANT: If user previously subscribed but the DB row is missing (or was cleaned up),
+        // re-save the subscription so sending works.
+        if (subscription && user) {
+          try {
+            await saveSubscriptionToDatabase(subscription, schoolId);
+            console.log('[Push] Subscription ensured in database');
+          } catch (e) {
+            console.error('[Push] Failed to sync subscription to database:', e);
+            // Prevent misleading "enabled" state when backend cannot target this device.
+            setIsSubscribed(false);
+            toast({
+              title: 'Notifications need setup',
+              description: 'Your browser is allowed, but this device is not registered for notifications. Please turn notifications off and on again.',
+              variant: 'destructive',
+            });
+          }
+        }
       } catch (error) {
         console.error('[Push] Service worker registration failed:', error);
       }
     };
 
     initServiceWorker();
-  }, [isSupported]);
+  }, [isSupported, user, schoolId, saveSubscriptionToDatabase, toast]);
 
   // Request notification permission
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -145,31 +206,19 @@ export function usePushNotifications(schoolId?: string) {
 
       console.log('[Push] Subscribed:', subscription);
 
-      // Extract keys from subscription
-      const subscriptionJson = subscription.toJSON();
-      const subscriptionData: PushSubscriptionData = {
-        endpoint: subscription.endpoint,
-        p256dh: subscriptionJson.keys?.p256dh || '',
-        auth: subscriptionJson.keys?.auth || '',
-      };
-
-      // Save subscription to database
-      const { error } = await supabase.from('push_subscriptions').upsert({
-        user_id: user.id,
-        school_id: schoolId || null,
-        endpoint: subscriptionData.endpoint,
-        p256dh: subscriptionData.p256dh,
-        auth: subscriptionData.auth,
-        user_agent: navigator.userAgent,
-      }, {
-        onConflict: 'endpoint',
-      });
-
-      if (error) {
+      try {
+        await saveSubscriptionToDatabase(subscription, schoolId);
+      } catch (error) {
         console.error('[Push] Failed to save subscription:', error);
+        try {
+          await subscription.unsubscribe();
+        } catch {
+          // ignore
+        }
+        setIsSubscribed(false);
         toast({
           title: 'Subscription Failed',
-          description: 'Failed to save your notification preferences.',
+          description: 'Failed to register this device for notifications. Please try again.',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -193,7 +242,7 @@ export function usePushNotifications(schoolId?: string) {
       setIsLoading(false);
       return false;
     }
-  }, [isSupported, registration, user, schoolId, requestPermission, toast]);
+  }, [isSupported, registration, user, schoolId, requestPermission, saveSubscriptionToDatabase, toast]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async (): Promise<boolean> => {
