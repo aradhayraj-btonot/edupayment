@@ -16,6 +16,8 @@ import About from "./pages/About";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import Security from "./pages/Security";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/security" element={<Security />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
               <Route path="/team-login" element={<TeamLogin />} />
               <Route
