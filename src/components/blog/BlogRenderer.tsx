@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { BlogBlock, BlogPoll, useBlogMutations } from '@/hooks/useBlog';
+import { BlogBlock, BlogPoll } from '@/hooks/useBlog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface BlogRendererProps {
   content: BlogBlock[];
@@ -12,7 +13,7 @@ interface BlogRendererProps {
 
 export function BlogRenderer({ content, postId }: BlogRendererProps) {
   return (
-    <div className="prose prose-lg dark:prose-invert max-w-none">
+    <div className="space-y-6">
       {content.map((block) => (
         <BlockRenderer key={block.id} block={block} postId={postId} />
       ))}
@@ -23,23 +24,38 @@ export function BlogRenderer({ content, postId }: BlogRendererProps) {
 function BlockRenderer({ block, postId }: { block: BlogBlock; postId?: string }) {
   switch (block.type) {
     case 'paragraph':
-      return <p className="whitespace-pre-wrap">{block.content}</p>;
+      return (
+        <p className="text-base md:text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap">
+          {block.content}
+        </p>
+      );
 
     case 'heading':
       const Tag = `h${block.level || 2}` as keyof JSX.IntrinsicElements;
-      return <Tag>{block.content}</Tag>;
+      const headingStyles = {
+        1: 'text-3xl md:text-4xl font-bold mt-10 mb-4',
+        2: 'text-2xl md:text-3xl font-bold mt-8 mb-3',
+        3: 'text-xl md:text-2xl font-semibold mt-6 mb-2',
+      };
+      return (
+        <Tag className={headingStyles[block.level as 1 | 2 | 3] || headingStyles[2]}>
+          {block.content}
+        </Tag>
+      );
 
     case 'image':
       return (
-        <figure className="my-6">
-          <img
-            src={block.src}
-            alt={block.alt || ''}
-            className="rounded-lg w-full"
-            loading="lazy"
-          />
+        <figure className="my-8">
+          <div className="rounded-xl overflow-hidden bg-muted">
+            <img
+              src={block.src}
+              alt={block.alt || ''}
+              className="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
           {block.alt && (
-            <figcaption className="text-center text-sm text-muted-foreground mt-2">
+            <figcaption className="text-center text-sm text-muted-foreground mt-3 italic">
               {block.alt}
             </figcaption>
           )}
@@ -49,12 +65,15 @@ function BlockRenderer({ block, postId }: { block: BlogBlock; postId?: string })
     case 'table':
       if (!block.rows || block.rows.length === 0) return null;
       return (
-        <div className="overflow-x-auto my-6">
-          <table className="w-full border-collapse border border-border">
+        <div className="my-8 overflow-x-auto rounded-xl border bg-card">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-muted">
+              <tr className="bg-muted/50">
                 {block.rows[0]?.map((cell, i) => (
-                  <th key={i} className="border border-border p-2 text-left font-semibold">
+                  <th 
+                    key={i} 
+                    className="px-4 py-3 text-left font-semibold text-sm border-b"
+                  >
                     {cell}
                   </th>
                 ))}
@@ -62,9 +81,9 @@ function BlockRenderer({ block, postId }: { block: BlogBlock; postId?: string })
             </thead>
             <tbody>
               {block.rows.slice(1).map((row, ri) => (
-                <tr key={ri}>
+                <tr key={ri} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                   {row.map((cell, ci) => (
-                    <td key={ci} className="border border-border p-2">
+                    <td key={ci} className="px-4 py-3 text-sm">
                       {cell}
                     </td>
                   ))}
@@ -176,35 +195,51 @@ function PollRenderer({ pollId }: { pollId: string }) {
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="my-6 p-6 bg-secondary/50 rounded-lg not-prose">
-      <h4 className="font-semibold text-lg mb-4">{poll.question}</h4>
+    <div className="my-8 p-6 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl border border-primary/10">
+      <h4 className="font-semibold text-lg mb-5">{poll.question}</h4>
       <div className="space-y-3">
         {poll.options.map((option, index) => {
           const voteCount = votes[index] || 0;
           const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
 
           return (
-            <div key={index} className="space-y-1">
-              <div className="flex items-center gap-3">
-                {!hasVoted && (
-                  <input
-                    type="radio"
-                    name={`poll-${pollId}`}
-                    checked={selectedOption === index}
-                    onChange={() => setSelectedOption(index)}
-                    className="h-4 w-4"
-                  />
-                )}
-                <span className="flex-1">{option.text}</span>
+            <div 
+              key={index} 
+              className={cn(
+                "relative rounded-lg border transition-all",
+                !hasVoted && "cursor-pointer hover:border-primary/50",
+                !hasVoted && selectedOption === index && "border-primary bg-primary/5"
+              )}
+              onClick={() => !hasVoted && setSelectedOption(index)}
+            >
+              <div className="relative z-10 p-4">
+                <div className="flex items-center gap-3">
+                  {!hasVoted && (
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                      selectedOption === index ? "border-primary bg-primary" : "border-muted-foreground/30"
+                    )}>
+                      {selectedOption === index && (
+                        <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                      )}
+                    </div>
+                  )}
+                  <span className="flex-1 font-medium">{option.text}</span>
+                  {hasVoted && (
+                    <span className="text-sm font-semibold text-primary">
+                      {percentage.toFixed(0)}%
+                    </span>
+                  )}
+                </div>
                 {hasVoted && (
-                  <span className="text-sm text-muted-foreground">
-                    {voteCount} ({percentage.toFixed(0)}%)
-                  </span>
+                  <div className="mt-2">
+                    <Progress value={percentage} className="h-2" />
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {voteCount} vote{voteCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
                 )}
               </div>
-              {hasVoted && (
-                <Progress value={percentage} className="h-2" />
-              )}
             </div>
           );
         })}
@@ -213,13 +248,13 @@ function PollRenderer({ pollId }: { pollId: string }) {
         <Button
           onClick={handleVote}
           disabled={selectedOption === null || isVoting}
-          className="mt-4"
+          className="mt-5 w-full"
         >
-          {isVoting ? 'Voting...' : 'Submit Vote'}
+          {isVoting ? 'Submitting...' : 'Submit Vote'}
         </Button>
       )}
       {hasVoted && (
-        <p className="text-sm text-muted-foreground mt-3">
+        <p className="text-sm text-muted-foreground mt-4 text-center">
           Total votes: {totalVotes}
         </p>
       )}
