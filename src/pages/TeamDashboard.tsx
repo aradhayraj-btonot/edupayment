@@ -49,10 +49,12 @@ import {
   Trash2,
   Package,
   Gift,
+  FileText,
 } from 'lucide-react';
 import { Bell } from 'lucide-react';
 import { SendPushNotificationDialog } from '@/components/notifications/SendPushNotificationDialog';
 import { TeamTicketManager } from '@/components/support/TeamTicketManager';
+import { BlogManager } from '@/components/blog/BlogManager';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -307,7 +309,7 @@ const TeamDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full max-w-6xl">
+          <TabsList className="grid grid-cols-9 w-full max-w-6xl">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schools">Schools</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
@@ -315,6 +317,7 @@ const TeamDashboard = () => {
             <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
           </TabsList>
 
@@ -1232,6 +1235,11 @@ const TeamDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Blog Tab */}
+          <TabsContent value="blog">
+            <BlogManager />
           </TabsContent>
 
           {/* Support Tab */}
