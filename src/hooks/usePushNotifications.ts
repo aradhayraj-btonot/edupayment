@@ -3,8 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-// VAPID public key - this should match the one in your edge function
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+// VAPID public key
+// We first try Vite build-time env, but fall back to fetching it from the backend
+// because some deployments don't expose custom VITE_* vars to the client runtime.
+const VAPID_PUBLIC_KEY_ENV = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 export type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -37,9 +39,11 @@ export function usePushNotifications(schoolId?: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(VAPID_PUBLIC_KEY_ENV || null);
 
   // Check if push notifications are supported
   const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
 
   const saveSubscriptionToDatabase = useCallback(
     async (subscription: PushSubscription, regSchoolId?: string) => {
@@ -81,6 +85,29 @@ export function usePushNotifications(schoolId?: string) {
     // Check notification permission
     setPermission(Notification.permission as PermissionState);
 
+    const loadVapidKey = async () => {
+      if (VAPID_PUBLIC_KEY_ENV) return; // already have it
+
+      // Try local cache first
+      const cached = localStorage.getItem('vapid_public_key');
+      if (cached) {
+        setVapidPublicKey(cached);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke('get-vapid-public-key');
+        if (error) throw error;
+        const key = (data as any)?.publicKey as string | undefined;
+        if (!key) throw new Error('Missing publicKey');
+        localStorage.setItem('vapid_public_key', key);
+        setVapidPublicKey(key);
+      } catch (e) {
+        console.error('[Push] Failed to load VAPID public key:', e);
+        // Don't toast here to avoid spam on every page load; we toast only when user tries to enable.
+      }
+    };
+
     // Register service worker and check subscription
     const initServiceWorker = async () => {
       try {
@@ -118,7 +145,8 @@ export function usePushNotifications(schoolId?: string) {
             setIsSubscribed(false);
             toast({
               title: 'Notifications need setup',
-              description: 'Your browser is allowed, but this device is not registered for notifications. Please turn notifications off and on again.',
+              description:
+                'Your browser is allowed, but this device is not registered for notifications. Please turn notifications off and on again.',
               variant: 'destructive',
             });
           }
@@ -128,8 +156,10 @@ export function usePushNotifications(schoolId?: string) {
       }
     };
 
+    loadVapidKey();
     initServiceWorker();
   }, [isSupported, user, schoolId, saveSubscriptionToDatabase, toast]);
+
 
   // Request notification permission
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -187,10 +217,12 @@ export function usePushNotifications(schoolId?: string) {
       }
 
       // Check for VAPID key
-      if (!VAPID_PUBLIC_KEY) {
+      const activeVapidKey = vapidPublicKey || VAPID_PUBLIC_KEY_ENV;
+      if (!activeVapidKey) {
         toast({
           title: 'Configuration Error',
-          description: 'Push notification public key is not configured.',
+          description:
+            'Push notification public key is not configured. Please contact support/admin to configure push notifications.',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -198,7 +230,7 @@ export function usePushNotifications(schoolId?: string) {
       }
 
       // Subscribe to push manager
-      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const applicationServerKey = urlBase64ToUint8Array(activeVapidKey);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
@@ -242,7 +274,7 @@ export function usePushNotifications(schoolId?: string) {
       setIsLoading(false);
       return false;
     }
-  }, [isSupported, registration, user, schoolId, requestPermission, saveSubscriptionToDatabase, toast]);
+  }, [isSupported, registration, user, schoolId, requestPermission, saveSubscriptionToDatabase, toast, vapidPublicKey]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async (): Promise<boolean> => {
