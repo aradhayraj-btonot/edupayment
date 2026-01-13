@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "3602ef49-1f01-4688-bccf-df544d02fb09",
+        });
+      });
+    </script>
     <meta name="google-site-verification" content="iqtpUMavNYgQV7Xt1p0jBpuQzFkUEaPh892DmISEzO8" />
     <title>EduPay by Btonot - School Fee Payment Platform | Aradhay Raj</title>
     <meta name="description" content="EduPay by Aradhay Raj Btonot - The best school fee payment platform in India. Pay school fees online with UPI, cards, and net banking. Secure, instant fee collection software for schools and parents.">
