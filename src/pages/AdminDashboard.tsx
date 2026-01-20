@@ -85,6 +85,7 @@ import { useIsSubscriptionActive } from "@/hooks/useSubscription";
 import { CreateTicketDialog } from "@/components/support/CreateTicketDialog";
 import { TicketList } from "@/components/support/TicketList";
 import { useMyTickets } from "@/hooks/useSupportTickets";
+import { UPIQRCodeGenerator } from "@/components/payment/UPIQRCodeGenerator";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1481,92 +1482,15 @@ const AdminDashboard = () => {
 
               {settingsTab === 'school' && selectedSchool && (
                 <div className="grid lg:grid-cols-2 gap-6">
-                  {/* UPI Settings */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg font-display flex items-center gap-2">
-                        <IndianRupee className="w-5 h-5" />
-                        Payment Settings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label htmlFor="upi-id">UPI ID</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            id="upi-id"
-                            placeholder="school@upi"
-                            defaultValue={selectedSchool.upi_id || ''}
-                            onBlur={(e) => {
-                              if (e.target.value !== selectedSchool.upi_id) {
-                                updateAdminSchool.mutate({ id: selectedSchool.id, upi_id: e.target.value });
-                              }
-                            }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Parents will use this UPI ID for payments
-                        </p>
-                      </div>
-                      <div>
-                        <Label>QR Code</Label>
-                        <div className="mt-2">
-                          {selectedSchool.upi_qr_code_url ? (
-                            <div className="flex items-center gap-4">
-                              <img 
-                                src={selectedSchool.upi_qr_code_url} 
-                                alt="UPI QR Code" 
-                                className="w-32 h-32 rounded-lg border"
-                              />
-                              <div className="space-y-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => fileInputRef.current?.click()}
-                                >
-                                  <Upload className="w-4 h-4 mr-2" />
-                                  Change QR Code
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
-                              <QrCode className="w-12 h-12 text-muted-foreground mb-2" />
-                              <p className="text-sm text-muted-foreground mb-3">No QR code uploaded</p>
-                              <Button 
-                                variant="outline"
-                                onClick={() => fileInputRef.current?.click()}
-                              >
-                                <Upload className="w-4 h-4 mr-2" />
-                                Upload QR Code
-                              </Button>
-                            </div>
-                          )}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = async () => {
-                                  // For simplicity, we'll use a data URL
-                                  // In production, you'd upload to storage
-                                  await updateAdminSchool.mutateAsync({ 
-                                    id: selectedSchool.id, 
-                                    upi_qr_code_url: reader.result as string 
-                                  });
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {/* UPI Settings - Now with auto QR generation */}
+                  <UPIQRCodeGenerator
+                    upiId={selectedSchool.upi_id || ""}
+                    onUpiIdChange={(newUpiId) => {
+                      updateAdminSchool.mutate({ id: selectedSchool.id, upi_id: newUpiId });
+                    }}
+                    schoolName={selectedSchool.name}
+                    isUpdating={updateAdminSchool.isPending}
+                  />
 
                   {/* School Info */}
                   <Card>
