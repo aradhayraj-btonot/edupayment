@@ -6,7 +6,7 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import Stats from "@/components/landing/Stats";
 import Pricing from "@/components/landing/Pricing";
 import Footer from "@/components/landing/Footer";
-
+import FloatingSupportWidget from "@/components/support/FloatingSupportWidget";
 const Index = () => {
   const structuredData = {
     "@context": "https://schema.org",
@@ -66,6 +66,7 @@ const Index = () => {
         <Stats />
         <Pricing />
         <Footer />
+        <FloatingSupportWidget />
       </main>
     </>
   );
