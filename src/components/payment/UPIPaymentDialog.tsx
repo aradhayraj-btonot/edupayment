@@ -99,9 +99,20 @@ export const UPIPaymentDialog = ({
       tn: `Fee payment for ${studentName} - ${fee?.fee_structures?.name || "School Fee"}`,
     });
 
-    // For specific apps, use their deep link scheme
-    if (app && app !== "upi") {
-      return `${app}://upi/pay?${params.toString()}`;
+    // For specific apps, use their correct deep link schemes
+    if (app) {
+      switch (app) {
+        case "gpay":
+          return `gpay://upi/pay?${params.toString()}`;
+        case "phonepe":
+          return `phonepe://pay?${params.toString()}`;
+        case "paytm":
+          return `paytm://upi/pay?${params.toString()}`;
+        case "bhim":
+          return `bhim://upi/pay?${params.toString()}`;
+        default:
+          return `upi://pay?${params.toString()}`;
+      }
     }
     return `upi://pay?${params.toString()}`;
   };
