@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Phone, Mail, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Message {
   id: string;
@@ -39,10 +38,14 @@ const FloatingSupportWidget = () => {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
   const getBotResponse = (userMessage: string): string => {
@@ -189,7 +192,7 @@ const FloatingSupportWidget = () => {
             </div>
 
             {/* Messages */}
-            <ScrollArea className="h-[300px] p-4" ref={scrollRef}>
+            <div className="h-[300px] overflow-y-auto p-4" ref={scrollRef}>
               <div className="space-y-4">
                 {messages.map((message) => (
                   <motion.div
@@ -246,7 +249,7 @@ const FloatingSupportWidget = () => {
                   </motion.div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Input */}
             <div className="p-3 border-t border-border">
