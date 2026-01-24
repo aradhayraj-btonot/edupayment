@@ -27,6 +27,9 @@ import {
   Sun,
   Lock,
   MessageSquare,
+  ChevronRight,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,6 +67,7 @@ const ParentDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedFeeForPayment, setSelectedFeeForPayment] = useState<any>(null);
+  const navScrollRef = useRef<HTMLDivElement>(null);
 
   // Data hooks
   const { data: students = [], isLoading: studentsLoading } = useParentStudents();
@@ -149,37 +153,48 @@ const ParentDashboard = () => {
   };
 
   const navItems = [
-    { icon: Home, label: "Dashboard", key: "dashboard" },
-    { icon: CreditCard, label: "Pay Fees", key: "pay" },
-    { icon: History, label: "Payment History", key: "history" },
-    { icon: Bell, label: "Notifications", key: "notifications" },
+    { icon: Home, label: "Home", key: "dashboard" },
+    { icon: CreditCard, label: "Pay", key: "pay" },
+    { icon: History, label: "History", key: "history" },
+    { icon: Bell, label: "Alerts", key: "notifications", badge: unreadCount },
     { icon: MessageSquare, label: "Support", key: "support" },
     { icon: Settings, label: "Settings", key: "settings" },
   ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
-        <div className="flex items-center justify-around py-2">
-          {navItems.map((item) => (
-            <button
+      {/* Mobile Horizontal Swipeable Navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border safe-area-bottom shadow-lg">
+        <div 
+          ref={navScrollRef}
+          className="flex items-center gap-1 px-2 py-2 overflow-x-auto scrollbar-hide"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          {navItems.map((item, index) => (
+            <motion.button
               key={item.key}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
               onClick={() => setActiveTab(item.key)}
-              className={`flex flex-col items-center gap-1 px-3 py-2 min-w-[60px] transition-colors ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[64px] px-3 py-2 rounded-xl transition-all duration-200 flex-shrink-0 ${
                 activeTab === item.key
-                  ? "text-primary"
-                  : "text-muted-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground hover:bg-secondary active:scale-95"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${activeTab === item.key ? "scale-110" : ""} transition-transform`} />
-              <span className="text-[10px] font-medium">{item.label}</span>
-              {item.key === "notifications" && unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">
-                  {unreadCount}
+              <item.icon className={`w-5 h-5 transition-transform ${activeTab === item.key ? "scale-110" : ""}`} />
+              <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
+              {item.badge && item.badge > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-semibold">
+                  {item.badge > 9 ? '9+' : item.badge}
                 </span>
               )}
-            </button>
+            </motion.button>
           ))}
         </div>
       </nav>
@@ -305,13 +320,13 @@ const ParentDashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pb-20 lg:pb-0">
-        {/* Header - Mobile Optimized */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border px-4 lg:px-6 py-3 lg:py-4">
+      <main className="flex-1 overflow-auto pb-24 lg:pb-0">
+        {/* Header - Mobile App Style */}
+        <header className="sticky top-0 z-30 bg-gradient-to-b from-primary/10 to-background px-4 lg:px-6 pt-4 pb-3 lg:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
-                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-secondary flex-shrink-0"
+                className="lg:hidden p-2.5 -ml-2 rounded-xl bg-secondary/80 hover:bg-secondary transition-colors flex-shrink-0"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               >
                 {sidebarOpen ? (
@@ -320,11 +335,19 @@ const ParentDashboard = () => {
                   <Menu className="w-5 h-5" />
                 )}
               </button>
-              <div className="min-w-0">
-                <h1 className="text-lg lg:text-2xl font-display font-bold text-foreground truncate">
+              <div className="min-w-0 lg:hidden">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                    <GraduationCap className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                  <span className="font-display font-bold text-foreground">EduPay</span>
+                </div>
+              </div>
+              <div className="min-w-0 hidden lg:block">
+                <h1 className="text-2xl font-display font-bold text-foreground truncate">
                   {navItems.find(n => n.key === activeTab)?.label || "Dashboard"}
                 </h1>
-                <p className="text-xs lg:text-sm text-muted-foreground truncate hidden sm:block">
+                <p className="text-sm text-muted-foreground truncate">
                   {selectedStudent 
                     ? `${selectedStudent.first_name} ${selectedStudent.last_name}`
                     : "View your fee details"
@@ -334,269 +357,299 @@ const ParentDashboard = () => {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <Button 
-                variant="outline" 
+                variant={unreadCount > 0 ? "default" : "outline"}
                 size="icon" 
-                className="relative w-9 h-9 lg:w-10 lg:h-10"
+                className={`relative w-10 h-10 rounded-xl ${unreadCount > 0 ? 'animate-pulse' : ''}`}
                 onClick={() => setActiveTab("notifications")}
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-destructive text-destructive-foreground text-[10px] lg:text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-semibold">
                     {unreadCount}
                   </span>
                 )}
               </Button>
-              <a href="tel:+911234567890" className="hidden sm:block">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Phone className="w-4 h-4" />
-                  <span className="hidden md:inline">Support</span>
-                </Button>
-              </a>
             </div>
           </div>
           
-          {/* Mobile Student Card */}
-          <div className="lg:hidden mt-3">
+          {/* Mobile Student Quick Card */}
+          <motion.div 
+            className="lg:hidden mt-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             {selectedStudent && (
-              <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-3 p-3 bg-card rounded-2xl border border-border shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                  <User className="w-6 h-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm truncate">
                     {selectedStudent.first_name} {selectedStudent.last_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Class {selectedStudent.class} {selectedStudent.section && `• ${selectedStudent.section}`}
+                    Class {selectedStudent.class} {selectedStudent.section && `• Sec ${selectedStudent.section}`}
                   </p>
                 </div>
-                {studentSchool && (
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xs text-muted-foreground">{studentSchool.name}</p>
-                  </div>
-                )}
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <Badge variant="secondary" className="text-[10px] px-2">
+                    {studentSchool?.name?.split(' ')[0] || 'School'}
+                  </Badge>
+                  {totalPending > 0 && (
+                    <span className="text-xs font-semibold text-coral">
+                      ₹{totalPending.toLocaleString('en-IN')} due
+                    </span>
+                  )}
+                </div>
               </div>
             )}
-          </div>
+          </motion.div>
         </header>
 
         {/* Dashboard Content */}
         <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
           {activeTab === "dashboard" && (
             <>
-              {/* Fee Summary - Mobile Optimized Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <Card className="border-l-4 border-l-primary h-full">
-                    <CardContent className="p-3 lg:p-6">
-                      <p className="text-xs lg:text-sm text-muted-foreground mb-1">
-                        Total Fee
-                      </p>
-                      <p className="text-lg lg:text-2xl font-bold text-foreground">
-                        {feesSummary.total}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <Card className="border-l-4 border-l-success h-full">
-                    <CardContent className="p-3 lg:p-6">
-                      <p className="text-xs lg:text-sm text-muted-foreground mb-1">
-                        Paid
-                      </p>
-                      <p className="text-lg lg:text-2xl font-bold text-success">
-                        {feesSummary.paid}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Card className="border-l-4 border-l-coral h-full">
-                    <CardContent className="p-3 lg:p-6">
-                      <p className="text-xs lg:text-sm text-muted-foreground mb-1">
-                        Pending
-                      </p>
-                      <p className="text-lg lg:text-2xl font-bold text-coral">
-                        {feesSummary.pending}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Card className="border-l-4 border-l-warning h-full">
-                    <CardContent className="p-3 lg:p-6">
-                      <p className="text-xs lg:text-sm text-muted-foreground mb-1">
-                        Due Date
-                      </p>
-                      <p className="text-base lg:text-2xl font-bold text-foreground">
-                        {feesSummary.dueDate}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+              {/* Quick Actions - App Style */}
+              <div className="grid grid-cols-4 gap-2 lg:hidden">
+                {[
+                  { icon: CreditCard, label: "Pay Now", key: "pay", color: "bg-primary" },
+                  { icon: History, label: "History", key: "history", color: "bg-success" },
+                  { icon: Bell, label: "Alerts", key: "notifications", color: "bg-warning" },
+                  { icon: Phone, label: "Help", key: "support", color: "bg-info" },
+                ].map((action, index) => (
+                  <motion.button
+                    key={action.key}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => setActiveTab(action.key)}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-card border border-border hover:border-primary/30 active:scale-95 transition-all"
+                  >
+                    <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center`}>
+                      <action.icon className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <span className="text-[10px] font-medium text-foreground">{action.label}</span>
+                  </motion.button>
+                ))}
               </div>
 
-              <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
-                {/* Pending Fees */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 lg:pb-4">
-                    <CardTitle className="text-base lg:text-lg font-display">
-                      Pending Fees
-                    </CardTitle>
-                    <Badge variant="secondary" className="gap-1 text-xs">
-                      <AlertTriangle className="w-3 h-3" />{studentFees.length}
-                    </Badge>
-                  </CardHeader>
-                  <CardContent className="space-y-2 lg:space-y-3 pt-0">
-                    {studentFees.length === 0 ? (
-                      <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
-                        No pending fees at the moment.
+              {/* Balance Card - App Style */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="overflow-hidden border-0 shadow-lg">
+                  <div className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-4 lg:p-6 text-primary-foreground">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <p className="text-primary-foreground/70 text-xs lg:text-sm font-medium mb-1">Total Balance</p>
+                        <p className="text-2xl lg:text-4xl font-bold">{feesSummary.total}</p>
                       </div>
-                    ) : (
-                      studentFees.map((fee) => (
-                        <div
-                          key={fee.id}
-                          className="p-3 lg:p-4 rounded-lg bg-secondary/50"
-                        >
-                          <div className="flex items-start justify-between gap-2">
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
+                        <Wallet className="w-5 h-5 lg:w-6 lg:h-6" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 lg:gap-4">
+                      <div className="bg-primary-foreground/10 rounded-xl p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle className="w-3.5 h-3.5 text-green-300" />
+                          <span className="text-[10px] lg:text-xs text-primary-foreground/70">Paid</span>
+                        </div>
+                        <p className="text-lg lg:text-xl font-bold">{feesSummary.paid}</p>
+                      </div>
+                      <div className="bg-primary-foreground/10 rounded-xl p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="w-3.5 h-3.5 text-orange-300" />
+                          <span className="text-[10px] lg:text-xs text-primary-foreground/70">Pending</span>
+                        </div>
+                        <p className="text-lg lg:text-xl font-bold">{feesSummary.pending}</p>
+                      </div>
+                    </div>
+                  </div>
+                  {studentFees.length > 0 && (
+                    <div className="p-3 lg:p-4 bg-coral/10 border-t border-coral/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-coral" />
+                          <span className="text-xs lg:text-sm text-foreground">Next due: <strong>{feesSummary.dueDate}</strong></span>
+                        </div>
+                        <Button size="sm" className="h-8 px-3 text-xs" onClick={() => setActiveTab("pay")}>
+                          Pay Now <ChevronRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+
+              <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+                {/* Pending Fees - App Style */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <Card className="border-0 shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-coral/10 flex items-center justify-center">
+                          <AlertTriangle className="w-4 h-4 text-coral" />
+                        </div>
+                        <CardTitle className="text-sm lg:text-base font-semibold">
+                          Pending Fees
+                        </CardTitle>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {studentFees.length} items
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-2 pt-0">
+                      {studentFees.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <CheckCircle className="w-10 h-10 mx-auto mb-2 text-success/50" />
+                          <p className="text-sm">All fees paid! 🎉</p>
+                        </div>
+                      ) : (
+                        studentFees.slice(0, 3).map((fee, index) => (
+                          <motion.div
+                            key={fee.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+                          >
+                            <div className={`w-2 h-10 rounded-full ${new Date(fee.due_date) < new Date() ? 'bg-destructive' : 'bg-warning'}`} />
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-foreground text-sm lg:text-base truncate">
+                              <p className="font-medium text-foreground text-sm truncate">
                                 {fee.fee_structures?.name || 'Fee'}
                               </p>
-                              <div className="flex items-center gap-1 mt-1">
-                                <Calendar className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                                <span className="text-xs lg:text-sm text-muted-foreground">
-                                  {format(new Date(fee.due_date), 'dd MMM')}
-                                </span>
-                                <Badge
-                                  variant={new Date(fee.due_date) < new Date() ? "destructive" : "secondary"}
-                                  className="ml-1 text-[10px] lg:text-xs px-1.5 py-0"
-                                >
-                                  {new Date(fee.due_date) < new Date() ? "Overdue" : "Upcoming"}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-bold text-foreground text-sm lg:text-base">
-                                ₹{(Number(fee.amount) - Number(fee.discount || 0)).toLocaleString('en-IN')}
+                              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {format(new Date(fee.due_date), 'dd MMM')}
+                                {new Date(fee.due_date) < new Date() && (
+                                  <Badge variant="destructive" className="text-[8px] px-1 py-0 h-4 ml-1">Overdue</Badge>
+                                )}
                               </p>
-                              <Button size="sm" className="mt-1.5 h-7 lg:h-8 text-xs lg:text-sm px-2 lg:px-3" onClick={() => handlePayFee(fee)}>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm">
+                                ₹{(Number(fee.amount) - Number(fee.discount || 0)).toLocaleString('en-IN')}
+                              </span>
+                              <Button size="sm" className="h-7 px-2.5 text-xs rounded-lg" onClick={() => handlePayFee(fee)}>
                                 Pay
                               </Button>
                             </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                    {totalPending > 0 && (
-                      <Button 
-                        variant="default" 
-                        className="w-full mt-3 lg:mt-4 bg-success hover:bg-success/90" 
-                        size="default"
-                        onClick={() => setActiveTab("pay")}
-                      >
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Pay All ({feesSummary.pending})
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Payment History */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 lg:pb-4">
-                    <CardTitle className="text-base lg:text-lg font-display">
-                      Recent Payments
-                    </CardTitle>
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setActiveTab("history")}>
-                      View All
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-2 lg:space-y-3 pt-0">
-                    {paymentsLoading ? (
-                      <div className="flex justify-center py-6 lg:py-8">
-                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    ) : completedPayments.length === 0 ? (
-                      <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
-                        No payment history yet.
-                      </div>
-                    ) : (
-                      completedPayments.slice(0, 3).map((payment) => (
-                        <div
-                          key={payment.id}
-                          className="flex items-center justify-between p-3 lg:p-4 rounded-lg bg-secondary/50 gap-3"
+                          </motion.div>
+                        ))
+                      )}
+                      {totalPending > 0 && (
+                        <Button 
+                          variant="default" 
+                          className="w-full mt-2 h-10 rounded-xl bg-gradient-to-r from-primary to-primary/80" 
+                          onClick={() => setActiveTab("pay")}
                         >
-                          <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
-                            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
-                              <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 text-success" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-foreground text-sm lg:text-base truncate">
-                                {payment.payment_method}
-                              </p>
-                              <p className="text-xs lg:text-sm text-muted-foreground">
-                                {payment.payment_date ? format(new Date(payment.payment_date), 'dd MMM') : 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-foreground text-sm lg:text-base">
-                              ₹{Number(payment.amount).toLocaleString('en-IN')}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1.5 text-[10px] lg:text-xs gap-1"
-                              onClick={() => {
-                                const receiptData: ReceiptData = {
-                                  paymentId: payment.id,
-                                  studentName: `${payment.students?.first_name || ''} ${payment.students?.last_name || ''}`,
-                                  studentClass: payment.students?.class || '',
-                                  schoolName: studentSchool?.name || 'School',
-                                  amount: Number(payment.amount),
-                                  paymentDate: payment.payment_date || payment.created_at,
-                                  paymentMethod: payment.payment_method,
-                                  transactionId: payment.transaction_id || undefined,
-                                };
-                                downloadReceipt(receiptData);
-                              }}
-                            >
-                              <Download className="w-3 h-3" />
-                              Receipt
-                            </Button>
-                          </div>
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Pay All • {feesSummary.pending}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Recent Payments - App Style */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <Card className="border-0 shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                          <TrendingUp className="w-4 h-4 text-success" />
                         </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
+                        <CardTitle className="text-sm lg:text-base font-semibold">
+                          Recent Activity
+                        </CardTitle>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => setActiveTab("history")}>
+                        View All <ChevronRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-2 pt-0">
+                      {paymentsLoading ? (
+                        <div className="flex justify-center py-8">
+                          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : completedPayments.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <History className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                          <p className="text-sm">No transactions yet</p>
+                        </div>
+                      ) : (
+                        completedPayments.slice(0, 3).map((payment, index) => (
+                          <motion.div
+                            key={payment.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50"
+                          >
+                            <div className="w-9 h-9 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
+                              <CheckCircle className="w-4 h-4 text-success" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-foreground text-sm truncate">
+                                {payment.payment_method} Payment
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {payment.payment_date ? format(new Date(payment.payment_date), 'dd MMM, HH:mm') : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-sm text-success">
+                                +₹{Number(payment.amount).toLocaleString('en-IN')}
+                              </p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-1 text-[9px] gap-0.5 text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  const receiptData: ReceiptData = {
+                                    paymentId: payment.id,
+                                    studentName: `${payment.students?.first_name || ''} ${payment.students?.last_name || ''}`,
+                                    studentClass: payment.students?.class || '',
+                                    schoolName: studentSchool?.name || 'School',
+                                    amount: Number(payment.amount),
+                                    paymentDate: payment.payment_date || payment.created_at,
+                                    paymentMethod: payment.payment_method,
+                                    transactionId: payment.transaction_id || undefined,
+                                  };
+                                  downloadReceipt(receiptData);
+                                }}
+                              >
+                                <Download className="w-3 h-3" />
+                                Receipt
+                              </Button>
+                            </div>
+                          </motion.div>
+                        ))
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </div>
 
-              {/* Payment Methods - Mobile Optimized */}
-              <Card>
+              {/* Quick Pay Options - Hidden on mobile since we have quick actions */}
+              <Card className="hidden lg:block">
                 <CardHeader className="pb-2 lg:pb-4">
                   <CardTitle className="text-base lg:text-lg font-display">
                     Quick Pay Options
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     {[
                       { name: "UPI", icon: "📱", desc: "GPay, PhonePe" },
                       { name: "Card", icon: "💳", desc: "Credit/Debit" },
@@ -605,14 +658,14 @@ const ParentDashboard = () => {
                     ].map((method) => (
                       <button
                         key={method.name}
-                        className="p-3 lg:p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                        className="p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
                         onClick={() => setActiveTab("pay")}
                       >
-                        <span className="text-2xl lg:text-3xl mb-1 lg:mb-2 block">{method.icon}</span>
-                        <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm lg:text-base">
+                        <span className="text-3xl mb-2 block">{method.icon}</span>
+                        <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
                           {method.name}
                         </p>
-                        <p className="text-xs lg:text-sm text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {method.desc}
                         </p>
                       </button>
