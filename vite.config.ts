@@ -15,4 +15,17 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          ui: ["framer-motion", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
+          query: ["@tanstack/react-query"],
+        },
+      },
+    },
+    target: "esnext",
+    minify: "esbuild",
+  },
 }));
