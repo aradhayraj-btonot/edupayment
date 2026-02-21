@@ -55,6 +55,7 @@ import { Bell } from 'lucide-react';
 import { SendPushNotificationDialog } from '@/components/notifications/SendPushNotificationDialog';
 import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { BlogManager } from '@/components/blog/BlogManager';
+import { AssignAdminByUID } from '@/components/team/AssignAdminByUID';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -309,12 +310,13 @@ const TeamDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-9 w-full max-w-6xl">
+          <TabsList className="flex w-full max-w-6xl overflow-x-auto scrollbar-hide">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="schools">Schools</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             <TabsTrigger value="parents">Parents</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
+            <TabsTrigger value="assign-admin">Assign Admin</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
@@ -1235,6 +1237,11 @@ const TeamDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Assign Admin Tab */}
+          <TabsContent value="assign-admin">
+            <AssignAdminByUID />
           </TabsContent>
 
           {/* Blog Tab */}
