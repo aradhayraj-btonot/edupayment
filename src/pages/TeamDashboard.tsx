@@ -56,6 +56,7 @@ import { SendPushNotificationDialog } from '@/components/notifications/SendPushN
 import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { BlogManager } from '@/components/blog/BlogManager';
 import { AssignAdminByUID } from '@/components/team/AssignAdminByUID';
+import { AssignTeamByUID } from '@/components/team/AssignTeamByUID';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
