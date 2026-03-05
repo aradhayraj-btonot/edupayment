@@ -1246,6 +1246,11 @@ const TeamDashboard = () => {
             <AssignAdminByUID />
           </TabsContent>
 
+          {/* Team Member Tab */}
+          <TabsContent value="team-member">
+            <AssignTeamByUID />
+          </TabsContent>
+
           {/* Blog Tab */}
           <TabsContent value="blog">
             <BlogManager />
