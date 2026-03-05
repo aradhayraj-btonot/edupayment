@@ -320,6 +320,7 @@ const TeamDashboard = () => {
             <TabsTrigger value="assign-admin">Assign Admin</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="team-member">Team Member</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
           </TabsList>
