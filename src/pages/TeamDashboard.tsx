@@ -56,6 +56,7 @@ import { SendPushNotificationDialog } from '@/components/notifications/SendPushN
 import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { BlogManager } from '@/components/blog/BlogManager';
 import { AssignAdminByUID } from '@/components/team/AssignAdminByUID';
+import { AssignTeamByUID } from '@/components/team/AssignTeamByUID';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -319,6 +320,7 @@ const TeamDashboard = () => {
             <TabsTrigger value="assign-admin">Assign Admin</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="team-member">Team Member</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
           </TabsList>
@@ -1242,6 +1244,11 @@ const TeamDashboard = () => {
           {/* Assign Admin Tab */}
           <TabsContent value="assign-admin">
             <AssignAdminByUID />
+          </TabsContent>
+
+          {/* Team Member Tab */}
+          <TabsContent value="team-member">
+            <AssignTeamByUID />
           </TabsContent>
 
           {/* Blog Tab */}
