@@ -152,10 +152,14 @@ const ParentDashboard = () => {
     dueDate: studentFees.length > 0 ? format(new Date(studentFees[0].due_date), 'dd MMM yyyy') : 'N/A',
   };
 
+  // Fetch fee structures for the student's school
+  const { data: schoolFeeStructures = [] } = useFeeStructures(selectedStudent?.school_id);
+
   const navItems = [
     { icon: Home, label: "Home", key: "dashboard" },
     { icon: CreditCard, label: "Pay", key: "pay" },
     { icon: History, label: "History", key: "history" },
+    { icon: BarChart3, label: "Fees", key: "fees" },
     { icon: Bell, label: "Alerts", key: "notifications", badge: unreadCount },
     { icon: MessageSquare, label: "Support", key: "support" },
     { icon: Settings, label: "Settings", key: "settings" },
