@@ -220,7 +220,7 @@ const AdminDashboard = () => {
       due_date: feeForm.due_date || null,
     });
     
-    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "" });
+    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "", target_class: "" });
     setAddFeeOpen(false);
   };
 
