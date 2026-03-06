@@ -96,6 +96,9 @@ const ParentDashboard = () => {
   // Check subscription status
   const { isActive: isSubscriptionActive, isLoading: subscriptionLoading } = useIsSubscriptionActive(selectedStudent?.school_id);
 
+  // Fetch fee structures for the student's school
+  const { data: schoolFeeStructures = [] } = useFeeStructures(selectedStudent?.school_id);
+
   // Show blocker if subscription is expired
   if (!subscriptionLoading && selectedStudent && !isSubscriptionActive) {
     return <SubscriptionBlocker type="parent" schoolName={studentSchool?.name} />;
