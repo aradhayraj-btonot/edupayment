@@ -35,7 +35,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useParentStudents } from "@/hooks/useStudents";
 import { useParentPayments, useCreatePayment, useUploadScreenshot } from "@/hooks/usePayments";
-import { useStudentFees } from "@/hooks/useFees";
+import { useStudentFees, useFeeStructures } from "@/hooks/useFees";
 import { useSchools } from "@/hooks/useSchools";
 import { useParentNotifications, useNotificationReads, useMarkNotificationRead } from "@/hooks/useNotifications";
 import { PushNotificationToggle } from "@/components/notifications/PushNotificationToggle";
