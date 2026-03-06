@@ -1399,6 +1399,7 @@ const AdminDashboard = () => {
                                 description: fee.description || '',
                                 recurrence_type: (fee as any).recurrence_type || 'monthly',
                                 due_date: fee.due_date || '',
+                                target_class: (fee as any).target_class || '',
                               });
                               setEditFeeOpen(true);
                             }}
