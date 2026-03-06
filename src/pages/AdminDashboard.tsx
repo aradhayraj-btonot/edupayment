@@ -163,6 +163,7 @@ const AdminDashboard = () => {
     description: "",
     recurrence_type: "monthly" as 'monthly' | 'annually' | 'one_time',
     due_date: "",
+    target_class: "",
   });
 
   const handleSignOut = async () => {
