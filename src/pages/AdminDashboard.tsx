@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,7 +86,8 @@ import { CreateTicketDialog } from "@/components/support/CreateTicketDialog";
 import { TicketList } from "@/components/support/TicketList";
 import { useMyTickets } from "@/hooks/useSupportTickets";
 import { UPIQRCodeGenerator } from "@/components/payment/UPIQRCodeGenerator";
-
+import { StudentListGrouped } from "@/components/admin/StudentListGrouped";
+import { BulkStudentImport } from "@/components/admin/BulkStudentImport";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, role } = useAuth();
@@ -94,6 +95,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [addFeeOpen, setAddFeeOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
 
   // Data hooks
@@ -161,6 +163,7 @@ const AdminDashboard = () => {
     description: "",
     recurrence_type: "monthly" as 'monthly' | 'annually' | 'one_time',
     due_date: "",
+    target_class: "",
   });
 
   const handleSignOut = async () => {
@@ -215,9 +218,10 @@ const AdminDashboard = () => {
       description: feeForm.description || null,
       recurrence_type: feeForm.recurrence_type,
       due_date: feeForm.due_date || null,
-    });
+      target_class: feeForm.target_class || null,
+    } as any);
     
-    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "" });
+    setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "", target_class: "" });
     setAddFeeOpen(false);
   };
 
@@ -878,7 +882,7 @@ const AdminDashboard = () => {
                           <Label htmlFor="class">Class *</Label>
                           <Input
                             id="class"
-                            placeholder="e.g., 10-A"
+                            placeholder="e.g., 10"
                             value={studentForm.class}
                             onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
                             required
@@ -888,6 +892,7 @@ const AdminDashboard = () => {
                           <Label htmlFor="section">Section</Label>
                           <Input
                             id="section"
+                            placeholder="e.g., A"
                             value={studentForm.section}
                             onChange={(e) => setStudentForm({ ...studentForm, section: e.target.value })}
                           />
@@ -944,99 +949,37 @@ const AdminDashboard = () => {
                   <div className="flex justify-center py-8">
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
-                ) : students.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No students enrolled yet. Add your first student.
-                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {students.map((student) => (
-                      <div
-                        key={student.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-primary font-semibold text-sm">
-                              {student.first_name.charAt(0)}{student.last_name.charAt(0)}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {student.first_name} {student.last_name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Class {student.class} {student.section && `• Section ${student.section}`}
-                              {student.roll_number && ` • Roll: ${student.roll_number}`}
-                            </p>
-                            <div className="flex gap-2 mt-1">
-                              {student.parent_email && (
-                                <p className="text-xs text-primary/70">
-                                  Parent: {student.parent_email}
-                                </p>
-                              )}
-                              {student.transport_charge > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  Transport: ₹{Number(student.transport_charge).toLocaleString('en-IN')}/mo
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={student.parent_id ? "default" : "secondary"}>
-                            {student.parent_id ? "Linked" : "Pending"}
-                          </Badge>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => {
-                              setEditingStudent(student);
-                              setStudentForm({
-                                first_name: student.first_name,
-                                last_name: student.last_name,
-                                class: student.class,
-                                section: student.section || '',
-                                roll_number: student.roll_number || '',
-                                parent_email: student.parent_email || '',
-                                transport_charge: student.transport_charge?.toString() || '',
-                              });
-                              setEditStudentOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Student</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete {student.first_name} {student.last_name}? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteStudent.mutate(student.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <StudentListGrouped
+                    students={students}
+                    onEditStudent={(student) => {
+                      setEditingStudent(student);
+                      setStudentForm({
+                        first_name: student.first_name,
+                        last_name: student.last_name,
+                        class: student.class,
+                        section: student.section || '',
+                        roll_number: student.roll_number || '',
+                        parent_email: student.parent_email || '',
+                        transport_charge: student.transport_charge?.toString() || '',
+                      });
+                      setEditStudentOpen(true);
+                    }}
+                    onDeleteStudent={(id) => deleteStudent.mutate(id)}
+                    onBulkImport={() => setBulkImportOpen(true)}
+                  />
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Bulk Import Dialog */}
+          {selectedSchool && (
+            <BulkStudentImport
+              open={bulkImportOpen}
+              onOpenChange={setBulkImportOpen}
+              schoolId={selectedSchool.id}
+            />
           )}
 
           {activeTab === "payments" && (
@@ -1337,6 +1280,30 @@ const AdminDashboard = () => {
                           onChange={(e) => setFeeForm({ ...feeForm, description: e.target.value })}
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="target-class">Target Class (Optional)</Label>
+                        <Select
+                          value={feeForm.target_class || "all"}
+                          onValueChange={(value) => setFeeForm({ ...feeForm, target_class: value === "all" ? "" : value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All classes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Classes</SelectItem>
+                            {Array.from(new Set(students.map(s => s.class))).sort((a, b) => {
+                              const numA = parseInt(a); const numB = parseInt(b);
+                              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                              return a.localeCompare(b);
+                            }).map(cls => (
+                              <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Leave as "All Classes" to apply to all students, or select a specific class.
+                        </p>
+                      </div>
                       <Button type="submit" className="w-full" disabled={createFee.isPending}>
                         {createFee.isPending ? "Adding..." : "Add Fee Structure"}
                       </Button>
@@ -1367,6 +1334,7 @@ const AdminDashboard = () => {
                             {(fee as any).recurrence_type === 'monthly' && ' • Monthly (29th)'}
                             {(fee as any).recurrence_type === 'annually' && fee.due_date && ` • Annual (${format(new Date(fee.due_date), 'MMM dd')})`}
                             {(fee as any).recurrence_type === 'one_time' && ' • One-time'}
+                            {(fee as any).target_class ? ` • Class ${(fee as any).target_class}` : ' • All Classes'}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -1396,6 +1364,7 @@ const AdminDashboard = () => {
                                 description: fee.description || '',
                                 recurrence_type: (fee as any).recurrence_type || 'monthly',
                                 due_date: fee.due_date || '',
+                                target_class: (fee as any).target_class || '',
                               });
                               setEditFeeOpen(true);
                             }}
@@ -1809,7 +1778,7 @@ const AdminDashboard = () => {
             
             setEditFeeOpen(false);
             setEditingFee(null);
-            setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "" });
+            setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "", target_class: "" });
           }} className="space-y-4">
             <div>
               <Label htmlFor="edit-fee-name">Fee Name *</Label>

@@ -30,12 +30,13 @@ import {
   ChevronRight,
   Wallet,
   TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useParentStudents } from "@/hooks/useStudents";
 import { useParentPayments, useCreatePayment, useUploadScreenshot } from "@/hooks/usePayments";
-import { useStudentFees } from "@/hooks/useFees";
+import { useStudentFees, useFeeStructures } from "@/hooks/useFees";
 import { useSchools } from "@/hooks/useSchools";
 import { useParentNotifications, useNotificationReads, useMarkNotificationRead } from "@/hooks/useNotifications";
 import { PushNotificationToggle } from "@/components/notifications/PushNotificationToggle";
@@ -94,6 +95,9 @@ const ParentDashboard = () => {
   
   // Check subscription status
   const { isActive: isSubscriptionActive, isLoading: subscriptionLoading } = useIsSubscriptionActive(selectedStudent?.school_id);
+
+  // Fetch fee structures for the student's school
+  const { data: schoolFeeStructures = [] } = useFeeStructures(selectedStudent?.school_id);
 
   // Show blocker if subscription is expired
   if (!subscriptionLoading && selectedStudent && !isSubscriptionActive) {
@@ -156,6 +160,7 @@ const ParentDashboard = () => {
     { icon: Home, label: "Home", key: "dashboard" },
     { icon: CreditCard, label: "Pay", key: "pay" },
     { icon: History, label: "History", key: "history" },
+    { icon: BarChart3, label: "Fees", key: "fees" },
     { icon: Bell, label: "Alerts", key: "notifications", badge: unreadCount },
     { icon: MessageSquare, label: "Support", key: "support" },
     { icon: Settings, label: "Settings", key: "settings" },
@@ -1060,6 +1065,84 @@ const ParentDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Fee Structures Tab */}
+          {activeTab === "fees" && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-xl font-display font-bold text-foreground">Fee Structure</h2>
+                <p className="text-sm text-muted-foreground">
+                  View all fees applicable to your child's school
+                </p>
+              </div>
+
+              {schoolFeeStructures.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No fee structures available.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {schoolFeeStructures.filter(f => f.is_active).map((fee, index) => {
+                    const appliesTo = (fee as any).target_class
+                      ? `Class ${(fee as any).target_class}`
+                      : "All Classes";
+                    const isRelevant = !(fee as any).target_class || (fee as any).target_class === selectedStudent?.class;
+
+                    return (
+                      <motion.div
+                        key={fee.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03 }}
+                      >
+                        <Card className={`border ${isRelevant ? 'border-primary/20' : 'border-border opacity-60'}`}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-foreground">{fee.name}</p>
+                                  {isRelevant && (
+                                    <Badge variant="default" className="text-[10px]">Applies to you</Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {fee.fee_type} • {fee.academic_year} • {appliesTo}
+                                </p>
+                                <div className="flex gap-2 mt-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {(fee as any).recurrence_type === 'monthly' ? 'Monthly (29th)' : (fee as any).recurrence_type === 'annually' ? 'Annually' : 'One-time'}
+                                  </Badge>
+                                  {fee.due_date && (fee as any).recurrence_type === 'annually' && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Due: {format(new Date(fee.due_date), 'dd MMM')}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {fee.description && (
+                                  <p className="text-xs text-muted-foreground mt-2">{fee.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-foreground">
+                                  ₹{Number(fee.amount).toLocaleString('en-IN')}
+                                </p>
+                                {(fee as any).recurrence_type === 'monthly' && (
+                                  <p className="text-[10px] text-muted-foreground">/month</p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

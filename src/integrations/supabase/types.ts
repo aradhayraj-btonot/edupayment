@@ -145,6 +145,7 @@ export type Database = {
           name: string
           recurrence_type: string
           school_id: string
+          target_class: string | null
           updated_at: string
         }
         Insert: {
@@ -159,6 +160,7 @@ export type Database = {
           name: string
           recurrence_type?: string
           school_id: string
+          target_class?: string | null
           updated_at?: string
         }
         Update: {
@@ -173,6 +175,7 @@ export type Database = {
           name?: string
           recurrence_type?: string
           school_id?: string
+          target_class?: string | null
           updated_at?: string
         }
         Relationships: [
