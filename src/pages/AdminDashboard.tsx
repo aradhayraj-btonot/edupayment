@@ -1813,7 +1813,7 @@ const AdminDashboard = () => {
             
             setEditFeeOpen(false);
             setEditingFee(null);
-            setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "" });
+            setFeeForm({ name: "", fee_type: "tuition", amount: "", academic_year: "2024-2025", description: "", recurrence_type: "monthly", due_date: "", target_class: "" });
           }} className="space-y-4">
             <div>
               <Label htmlFor="edit-fee-name">Fee Name *</Label>
