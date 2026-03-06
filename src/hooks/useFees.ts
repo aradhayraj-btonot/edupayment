@@ -13,6 +13,7 @@ export interface FeeStructure {
   description: string | null;
   is_active: boolean;
   recurrence_type: 'monthly' | 'annually' | 'one_time';
+  target_class: string | null;
   created_at: string;
   updated_at: string;
 }
