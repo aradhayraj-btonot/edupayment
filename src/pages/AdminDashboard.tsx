@@ -1280,6 +1280,30 @@ const AdminDashboard = () => {
                           onChange={(e) => setFeeForm({ ...feeForm, description: e.target.value })}
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="target-class">Target Class (Optional)</Label>
+                        <Select
+                          value={feeForm.target_class || "all"}
+                          onValueChange={(value) => setFeeForm({ ...feeForm, target_class: value === "all" ? "" : value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All classes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Classes</SelectItem>
+                            {Array.from(new Set(students.map(s => s.class))).sort((a, b) => {
+                              const numA = parseInt(a); const numB = parseInt(b);
+                              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                              return a.localeCompare(b);
+                            }).map(cls => (
+                              <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Leave as "All Classes" to apply to all students, or select a specific class.
+                        </p>
+                      </div>
                       <Button type="submit" className="w-full" disabled={createFee.isPending}>
                         {createFee.isPending ? "Adding..." : "Add Fee Structure"}
                       </Button>
