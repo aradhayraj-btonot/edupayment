@@ -1334,6 +1334,7 @@ const AdminDashboard = () => {
                             {(fee as any).recurrence_type === 'monthly' && ' • Monthly (29th)'}
                             {(fee as any).recurrence_type === 'annually' && fee.due_date && ` • Annual (${format(new Date(fee.due_date), 'MMM dd')})`}
                             {(fee as any).recurrence_type === 'one_time' && ' • One-time'}
+                            {(fee as any).target_class ? ` • Class ${(fee as any).target_class}` : ' • All Classes'}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
