@@ -30,6 +30,7 @@ import {
   ChevronRight,
   Wallet,
   TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
