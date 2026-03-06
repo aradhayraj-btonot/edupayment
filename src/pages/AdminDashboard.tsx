@@ -95,6 +95,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [addFeeOpen, setAddFeeOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
 
   // Data hooks
