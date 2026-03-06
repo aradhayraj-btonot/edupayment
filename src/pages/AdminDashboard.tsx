@@ -882,7 +882,7 @@ const AdminDashboard = () => {
                           <Label htmlFor="class">Class *</Label>
                           <Input
                             id="class"
-                            placeholder="e.g., 10-A"
+                            placeholder="e.g., 10"
                             value={studentForm.class}
                             onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
                             required
@@ -892,6 +892,7 @@ const AdminDashboard = () => {
                           <Label htmlFor="section">Section</Label>
                           <Input
                             id="section"
+                            placeholder="e.g., A"
                             value={studentForm.section}
                             onChange={(e) => setStudentForm({ ...studentForm, section: e.target.value })}
                           />
@@ -948,99 +949,37 @@ const AdminDashboard = () => {
                   <div className="flex justify-center py-8">
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
-                ) : students.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No students enrolled yet. Add your first student.
-                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {students.map((student) => (
-                      <div
-                        key={student.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-primary font-semibold text-sm">
-                              {student.first_name.charAt(0)}{student.last_name.charAt(0)}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {student.first_name} {student.last_name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Class {student.class} {student.section && `• Section ${student.section}`}
-                              {student.roll_number && ` • Roll: ${student.roll_number}`}
-                            </p>
-                            <div className="flex gap-2 mt-1">
-                              {student.parent_email && (
-                                <p className="text-xs text-primary/70">
-                                  Parent: {student.parent_email}
-                                </p>
-                              )}
-                              {student.transport_charge > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  Transport: ₹{Number(student.transport_charge).toLocaleString('en-IN')}/mo
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={student.parent_id ? "default" : "secondary"}>
-                            {student.parent_id ? "Linked" : "Pending"}
-                          </Badge>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => {
-                              setEditingStudent(student);
-                              setStudentForm({
-                                first_name: student.first_name,
-                                last_name: student.last_name,
-                                class: student.class,
-                                section: student.section || '',
-                                roll_number: student.roll_number || '',
-                                parent_email: student.parent_email || '',
-                                transport_charge: student.transport_charge?.toString() || '',
-                              });
-                              setEditStudentOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Student</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete {student.first_name} {student.last_name}? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteStudent.mutate(student.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <StudentListGrouped
+                    students={students}
+                    onEditStudent={(student) => {
+                      setEditingStudent(student);
+                      setStudentForm({
+                        first_name: student.first_name,
+                        last_name: student.last_name,
+                        class: student.class,
+                        section: student.section || '',
+                        roll_number: student.roll_number || '',
+                        parent_email: student.parent_email || '',
+                        transport_charge: student.transport_charge?.toString() || '',
+                      });
+                      setEditStudentOpen(true);
+                    }}
+                    onDeleteStudent={(id) => deleteStudent.mutate(id)}
+                    onBulkImport={() => setBulkImportOpen(true)}
+                  />
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Bulk Import Dialog */}
+          {selectedSchool && (
+            <BulkStudentImport
+              open={bulkImportOpen}
+              onOpenChange={setBulkImportOpen}
+              schoolId={selectedSchool.id}
+            />
           )}
 
           {activeTab === "payments" && (
