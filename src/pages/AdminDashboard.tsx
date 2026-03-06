@@ -86,7 +86,8 @@ import { CreateTicketDialog } from "@/components/support/CreateTicketDialog";
 import { TicketList } from "@/components/support/TicketList";
 import { useMyTickets } from "@/hooks/useSupportTickets";
 import { UPIQRCodeGenerator } from "@/components/payment/UPIQRCodeGenerator";
-
+import { StudentListGrouped } from "@/components/admin/StudentListGrouped";
+import { BulkStudentImport } from "@/components/admin/BulkStudentImport";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, role } = useAuth();
