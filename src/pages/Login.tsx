@@ -103,10 +103,16 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Login - EduPay School Fee Payment | Aradhay Raj Btonot</title>
-        <meta name="description" content="Sign in to EduPay by Aradhay Raj Btonot. Access your dashboard to pay school fees online with UPI, cards, and net banking." />
-        <meta name="keywords" content="EduPay login, school fee payment login, Aradhay Raj, Btonot, edu pay sign in" />
+        <title>Login | EduPay - School Fee Payment Platform by BTONOT</title>
+        <meta name="description" content="Sign in to EduPay. Access your dashboard to pay school fees online with UPI, manage payments, and track receipts. Built by Aradhay Raj, Founder of BTONOT." />
+        <meta name="keywords" content="EduPay login, school fee payment login, BTONOT, Aradhay Raj, edu pay sign in, parent login" />
         <link rel="canonical" href="https://edupay.com/login" />
+        <meta property="og:title" content="Login | EduPay by BTONOT" />
+        <meta property="og:description" content="Sign in to EduPay to manage school fees, payments, and receipts." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edupay.com/login" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Login | EduPay" />
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}
         </script>

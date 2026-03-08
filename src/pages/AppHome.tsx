@@ -58,8 +58,14 @@ const AppHome = () => {
   return (
     <>
       <Helmet>
-        <title>Install EduPay App - School Fee Management</title>
-        <meta name="description" content="Install the EduPay app on your device for faster access to school fee management." />
+        <title>Install EduPay App | School Fee Management by BTONOT</title>
+        <meta name="description" content="Install the EduPay progressive web app for instant access to school fee management, offline support, and push notifications. Built by BTONOT." />
+        <meta name="keywords" content="EduPay app, install EduPay, school fee app, PWA, BTONOT, offline school payments" />
+        <link rel="canonical" href="https://edupay.com/app" />
+        <meta property="og:title" content="Install EduPay App | BTONOT" />
+        <meta property="og:description" content="Get the EduPay app for faster school fee management with offline support." />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

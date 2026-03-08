@@ -7,10 +7,16 @@ const TermsAndConditions = () => {
   return (
     <>
       <Helmet>
-        <title>Terms and Conditions - EduPay School Fee Payment</title>
-        <meta name="description" content="Read EduPay's Terms and Conditions for using our school fee payment platform." />
-        <meta name="keywords" content="EduPay terms, conditions, school fee payment terms, user agreement" />
+        <title>Terms and Conditions | EduPay by BTONOT</title>
+        <meta name="description" content="Read EduPay's Terms and Conditions for using our school fee payment platform. Operated by BTONOT, founded by Aradhay Raj." />
+        <meta name="keywords" content="EduPay terms, conditions, school fee payment terms, BTONOT user agreement, Aradhay Raj" />
         <link rel="canonical" href="https://edupay.com/terms" />
+        <meta property="og:title" content="Terms and Conditions | EduPay by BTONOT" />
+        <meta property="og:description" content="Terms and Conditions for using EduPay school fee payment platform." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edupay.com/terms" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Terms & Conditions | EduPay" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

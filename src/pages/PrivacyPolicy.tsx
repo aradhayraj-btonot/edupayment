@@ -7,8 +7,16 @@ const PrivacyPolicy = () => {
   return (
     <>
       <Helmet>
-        <title>Privacy Policy | FeeSync</title>
-        <meta name="description" content="FeeSync Privacy Policy - Learn how we collect, use, and protect your personal information." />
+        <title>Privacy Policy | EduPay by BTONOT</title>
+        <meta name="description" content="EduPay Privacy Policy — Learn how we collect, use, and protect your personal information when using our school fee payment platform." />
+        <meta name="keywords" content="EduPay privacy policy, school fee data protection, BTONOT privacy, student data security" />
+        <link rel="canonical" href="https://edupay.com/privacy-policy" />
+        <meta property="og:title" content="Privacy Policy | EduPay by BTONOT" />
+        <meta property="og:description" content="Learn how EduPay protects your personal information and student data." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edupay.com/privacy-policy" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Privacy Policy | EduPay" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
