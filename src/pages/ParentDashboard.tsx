@@ -1144,6 +1144,90 @@ const ParentDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Install App */}
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-lg font-display flex items-center gap-2">
+                    <Smartphone className="w-5 h-5" />
+                    Install App
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Install EduPay on your device for quick access, offline support, and instant notifications.
+                  </p>
+
+                  {/* Android / Desktop Install */}
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Download className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">Android / Desktop</p>
+                        <p className="text-xs text-muted-foreground">Add to Home Screen via browser</p>
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        // Try to trigger the PWA install prompt
+                        const deferredPrompt = (window as any).__pwaInstallPrompt;
+                        if (deferredPrompt) {
+                          deferredPrompt.prompt();
+                          deferredPrompt.userChoice.then((choice: any) => {
+                            if (choice.outcome === 'accepted') {
+                              toast.success('App installed successfully!');
+                            }
+                            (window as any).__pwaInstallPrompt = null;
+                          });
+                        } else {
+                          toast.info('Tap the browser menu (⋮) and select "Add to Home Screen" or "Install App"');
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Install App
+                    </Button>
+                  </div>
+
+                  {/* iOS Instructions */}
+                  <div className="p-4 rounded-xl bg-secondary/50 border border-border space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                        <Share className="w-5 h-5 text-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">iPhone / iPad</p>
+                        <p className="text-xs text-muted-foreground">Add via Safari</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
+                        <span>Open this page in <strong className="text-foreground">Safari</strong></span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
+                        <span>Tap the <strong className="text-foreground">Share</strong> button <Share className="w-3 h-3 inline" /></span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
+                        <span>Select <strong className="text-foreground">"Add to Home Screen"</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Already installed hint */}
+                  {window.matchMedia('(display-mode: standalone)').matches && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-success/10 border border-success/20">
+                      <CheckCircle className="w-4 h-4 text-success" />
+                      <span className="text-sm font-medium text-success">App is already installed!</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
 
