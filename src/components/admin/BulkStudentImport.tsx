@@ -257,23 +257,23 @@ export const BulkStudentImport = ({ open, onOpenChange, schoolId }: BulkStudentI
             {/* Upload Options */}
             <div className="grid md:grid-cols-2 gap-4">
               {/* CSV Upload */}
-              <Card
-                className="cursor-pointer hover:border-primary/50 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center">
-                    <FileSpreadsheet className="w-7 h-7 text-success" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-foreground">CSV / Spreadsheet</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upload a .csv file with student data
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <label htmlFor="csv-upload-input" className="cursor-pointer block">
+                <Card className="hover:border-primary/50 transition-colors h-full">
+                  <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center">
+                      <FileSpreadsheet className="w-7 h-7 text-success" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-foreground">CSV / Spreadsheet</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload a .csv file with student data
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </label>
               <input
+                id="csv-upload-input"
                 ref={fileInputRef}
                 type="file"
                 accept=".csv,.txt"
@@ -282,24 +282,24 @@ export const BulkStudentImport = ({ open, onOpenChange, schoolId }: BulkStudentI
               />
 
               {/* AI Upload (Image/PDF) */}
-              <Card
-                className="cursor-pointer hover:border-primary/50 transition-colors"
-                onClick={() => aiFileInputRef.current?.click()}
-              >
-                <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Image className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-foreground">Image / PDF (AI)</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upload a screenshot, photo, or PDF — AI will extract data
-                    </p>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">Powered by AI</Badge>
-                </CardContent>
-              </Card>
+              <label htmlFor="ai-upload-input" className="cursor-pointer block">
+                <Card className="hover:border-primary/50 transition-colors h-full">
+                  <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Image className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-foreground">Image / PDF (AI)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload a screenshot, photo, or PDF — AI will extract data
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">Powered by AI</Badge>
+                  </CardContent>
+                </Card>
+              </label>
               <input
+                id="ai-upload-input"
                 ref={aiFileInputRef}
                 type="file"
                 accept="image/*,.pdf"
