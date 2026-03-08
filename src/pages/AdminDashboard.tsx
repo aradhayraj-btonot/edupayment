@@ -66,6 +66,7 @@ import {
   MessageSquare,
   FileDown,
   Share2,
+  Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,6 +95,7 @@ import { useMyTickets } from "@/hooks/useSupportTickets";
 import { UPIQRCodeGenerator } from "@/components/payment/UPIQRCodeGenerator";
 import { StudentListGrouped } from "@/components/admin/StudentListGrouped";
 import { BulkStudentImport } from "@/components/admin/BulkStudentImport";
+import { SpecialStudentManager } from "@/components/admin/SpecialStudentManager";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, role } = useAuth();
@@ -388,6 +390,7 @@ const AdminDashboard = () => {
     { icon: ShieldCheck, label: "Verify Payments", key: "verify" },
     { icon: Building, label: "Schools", key: "schools" },
     { icon: Users, label: "Students", key: "students" },
+    { icon: Star, label: "Special Students", key: "special" },
     { icon: CreditCard, label: "Payments", key: "payments" },
     { icon: BarChart3, label: "Fee Structures", key: "fees" },
     { icon: MessageSquare, label: "Support", key: "support" },
@@ -504,7 +507,7 @@ const AdminDashboard = () => {
                   {activeTab === "payments" && `${payments.length} total payments`}
                   {activeTab === "schools" && (adminSchool ? "Your school details" : "No school assigned")}
                   {activeTab === "fees" && `${feeStructures.length} fee structures`}
-                  
+                  {activeTab === "special" && `${students.filter((s: any) => s.is_special).length} special students (Govt. Scheme)`}
                 </p>
               </div>
             </div>
@@ -1238,6 +1241,10 @@ const AdminDashboard = () => {
               onOpenChange={setBulkImportOpen}
               schoolId={selectedSchool.id}
             />
+          )}
+
+          {activeTab === "special" && selectedSchool && (
+            <SpecialStudentManager students={students} schoolId={selectedSchool.id} />
           )}
 
           {activeTab === "payments" && (

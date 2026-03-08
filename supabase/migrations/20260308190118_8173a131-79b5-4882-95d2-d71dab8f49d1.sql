@@ -1,0 +1,1 @@
+ALTER TABLE public.students ADD COLUMN is_special boolean NOT NULL DEFAULT false;
