@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CardListSkeleton, StatGridSkeleton } from "@/components/ui/dashboard-skeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
