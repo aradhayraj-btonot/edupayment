@@ -558,6 +558,7 @@ export const UPIPaymentDialog = ({
                 </p>
               </div>
 
+              <Button
                 className="w-full"
                 size="lg"
                 onClick={handleUploadScreenshot}
