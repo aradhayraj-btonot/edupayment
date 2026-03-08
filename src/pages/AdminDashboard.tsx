@@ -1208,9 +1208,7 @@ const AdminDashboard = () => {
                     Please add a school first to manage students.
                   </div>
                 ) : studentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+                  <TableSkeleton rows={6} cols={5} />
                 ) : (
                   <StudentListGrouped
                     students={students}
