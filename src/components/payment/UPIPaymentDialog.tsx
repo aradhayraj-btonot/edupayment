@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export const UPIPaymentDialog = ({
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fullAmount = fee ? Number(fee.amount) - Number(fee.discount || 0) : 0;
@@ -85,6 +87,7 @@ export const UPIPaymentDialog = ({
       setScreenshotFile(null);
       setScreenshotPreview(null);
       setSelectedApp(null);
+      setTransactionId("");
     }
   }, [open]);
 
@@ -180,6 +183,15 @@ export const UPIPaymentDialog = ({
 
   const handleUploadScreenshot = async () => {
     if (!screenshotFile || !createdPaymentId) return;
+    
+    // Update transaction_id if provided
+    if (transactionId.trim()) {
+      await supabase
+        .from("payments")
+        .update({ transaction_id: transactionId.trim() })
+        .eq("id", createdPaymentId);
+    }
+    
     await onUploadScreenshot(screenshotFile, createdPaymentId);
     onOpenChange(false);
     toast.success("Payment submitted for verification!");
@@ -528,6 +540,22 @@ export const UPIPaymentDialog = ({
                     </>
                   )}
                 </motion.div>
+              </div>
+
+              {/* Transaction ID Input */}
+              <div className="space-y-2">
+                <Label htmlFor="transaction-id">UPI Transaction ID / UTR Number</Label>
+                <Input
+                  id="transaction-id"
+                  type="text"
+                  placeholder="e.g. 412345678901"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Find this in your UPI app's payment confirmation
+                </p>
               </div>
 
               <Button
