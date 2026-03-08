@@ -13,10 +13,14 @@ import {
   Rocket,
   Award,
   Linkedin,
-  Twitter,
   Github,
   Mail,
+  Instagram,
+  ExternalLink,
+  Brain,
+  Cpu,
 } from "lucide-react";
+import founderImage from "@/assets/founder-aradhay.png";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 
