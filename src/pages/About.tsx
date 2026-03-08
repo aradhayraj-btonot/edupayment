@@ -390,7 +390,106 @@ const About = () => {
           </div>
         </section>
 
-        {/* Technology Section */}
+        {/* Ventures Section */}
+        <section className="py-20 border-b border-border">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                BTONOT Ventures
+              </span>
+              <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
+                Companies & Products
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Building innovative platforms that leverage AI to solve real-world problems and create meaningful digital experiences.
+              </p>
+            </motion.div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+              {[
+                {
+                  name: "BTONOT",
+                  description: "The parent company behind multiple innovative technology and AI ventures, driving digital transformation.",
+                  icon: Rocket,
+                  color: "from-primary to-accent",
+                  highlight: true,
+                },
+                {
+                  name: "EduPay",
+                  description: "A seamless school fees payment app that simplifies fee collection for schools and payments for parents.",
+                  icon: GraduationCap,
+                  color: "from-success to-primary",
+                  highlight: false,
+                },
+                {
+                  name: "Prodlink",
+                  description: "A social media web platform designed to connect people and foster meaningful digital interactions.",
+                  icon: Users,
+                  color: "from-info to-primary",
+                  highlight: false,
+                },
+                {
+                  name: "Nexbro AI",
+                  description: "An AI-focused company delivering intelligent automation and AI solutions for modern businesses.",
+                  icon: Brain,
+                  color: "from-accent to-primary",
+                  highlight: false,
+                },
+              ].map((venture, index) => (
+                <motion.div
+                  key={venture.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className={`h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${venture.highlight ? 'border-primary/30 shadow-lg' : ''}`}>
+                    <CardContent className="p-6 flex flex-col h-full">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${venture.color} flex items-center justify-center mb-4`}>
+                        <venture.icon className="w-6 h-6 text-primary-foreground" />
+                      </div>
+                      <h3 className="text-lg font-display font-bold text-foreground mb-2">
+                        {venture.name}
+                        {venture.highlight && (
+                          <Badge variant="secondary" className="ml-2 text-xs">Parent Co.</Badge>
+                        )}
+                      </h3>
+                      <p className="text-sm text-muted-foreground flex-1">{venture.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* NexTrust AI - featured */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-5xl mx-auto mt-6"
+            >
+              <Card className="hover:shadow-xl transition-all duration-300 border-accent/20">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-warning to-accent flex items-center justify-center shrink-0">
+                    <Shield className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-display font-bold text-foreground mb-1">NexTrust AI</h3>
+                    <p className="text-sm text-muted-foreground">
+                      An AI system focused on trust, intelligence, and advanced decision support for critical operations.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </section>
+
         <section className="py-20">
           <div className="container mx-auto px-4">
             <motion.div
