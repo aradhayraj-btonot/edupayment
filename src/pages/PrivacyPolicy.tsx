@@ -15,7 +15,9 @@ const PrivacyPolicy = () => {
         <meta property="og:description" content="Learn how EduPay protects your personal information and student data." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://edupay.com/privacy-policy" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://edupay.com/og-image.png" />
         <meta name="twitter:title" content="Privacy Policy | EduPay" />
       </Helmet>
       

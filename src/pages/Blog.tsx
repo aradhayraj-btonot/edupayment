@@ -90,7 +90,10 @@ export default function Blog() {
           content="Expert tips and updates about school fee management and education technology."
         />
         <meta property="og:url" content={`${window.location.origin}/blog`} />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="EduPay Blog" />
+        <meta name="twitter:image" content="https://edupay.com/og-image.png" />
         <meta name="twitter:title" content="EduPay Blog" />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       </Helmet>

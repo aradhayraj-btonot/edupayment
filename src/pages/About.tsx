@@ -79,6 +79,7 @@ const About = () => {
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://edupay.com/about" />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
