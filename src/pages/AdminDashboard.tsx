@@ -66,6 +66,7 @@ import {
   MessageSquare,
   FileDown,
   Share2,
+  Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
