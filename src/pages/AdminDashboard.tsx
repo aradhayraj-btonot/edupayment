@@ -60,6 +60,8 @@ import {
   QrCode,
   Upload,
   MessageSquare,
+  FileDown,
+  Share2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
