@@ -102,7 +102,7 @@ const AdminDashboard = () => {
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [addFeeOpen, setAddFeeOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Data hooks
   const { data: adminSchool, isLoading: adminSchoolLoading } = useAdminSchool();
