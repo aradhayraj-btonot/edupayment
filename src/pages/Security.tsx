@@ -7,8 +7,16 @@ const Security = () => {
   return (
     <>
       <Helmet>
-        <title>Security Information & Awareness | FeeSync</title>
-        <meta name="description" content="Learn about FeeSync's security measures and best practices to keep your data safe." />
+        <title>Security Information & Awareness | EduPay by BTONOT</title>
+        <meta name="description" content="Learn about EduPay's security measures, encryption standards, and best practices to keep your school fee data safe. Built by BTONOT." />
+        <meta name="keywords" content="EduPay security, school fee payment security, data encryption, BTONOT security, PCI-DSS compliance" />
+        <link rel="canonical" href="https://edupay.com/security" />
+        <meta property="og:title" content="Security | EduPay by BTONOT" />
+        <meta property="og:description" content="Bank-level security for school fee payments. Learn how EduPay protects your data." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edupay.com/security" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Security | EduPay" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
