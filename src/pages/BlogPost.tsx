@@ -176,9 +176,7 @@ export default function BlogPost() {
           property="og:description"
           content={post.meta_description || post.excerpt || ''}
         />
-        {post.cover_image_url && (
-          <meta property="og:image" content={post.cover_image_url} />
-        )}
+        <meta property="og:image" content={post.cover_image_url || 'https://edupay.com/og-image.png'} />
         <meta property="og:url" content={`${window.location.origin}/blog/${post.slug}`} />
         <meta property="article:published_time" content={post.published_at || ''} />
         <meta property="article:section" content={post.category || 'general'} />
@@ -192,9 +190,7 @@ export default function BlogPost() {
           name="twitter:description"
           content={post.meta_description || post.excerpt || ''}
         />
-        {post.cover_image_url && (
-          <meta name="twitter:image" content={post.cover_image_url} />
-        )}
+        <meta name="twitter:image" content={post.cover_image_url || 'https://edupay.com/og-image.png'} />
 
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <script type="application/ld+json">{JSON.stringify(breadcrumbData)}</script>
