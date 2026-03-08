@@ -71,6 +71,7 @@ export const UPIPaymentDialog = ({
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fullAmount = fee ? Number(fee.amount) - Number(fee.discount || 0) : 0;
