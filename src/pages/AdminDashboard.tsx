@@ -1373,11 +1373,9 @@ const AdminDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingPaymentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : pendingPayments.length === 0 ? (
+              {pendingPaymentsLoading ? (
+                    <CardListSkeleton count={3} />
+                  ) : pendingPayments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success" />
                     <p>No pending payments to verify.</p>
