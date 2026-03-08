@@ -1243,6 +1243,10 @@ const AdminDashboard = () => {
             />
           )}
 
+          {activeTab === "special" && selectedSchool && (
+            <SpecialStudentManager students={students} schoolId={selectedSchool.id} />
+          )}
+
           {activeTab === "payments" && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
