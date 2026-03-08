@@ -1251,9 +1251,18 @@ const AdminDashboard = () => {
 
           {activeTab === "fees" && (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+               <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle className="text-lg font-display">Fee Structures</CardTitle>
-                <Dialog open={addFeeOpen} onOpenChange={setAddFeeOpen}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" className="gap-2" onClick={exportFeeStructuresPDF} disabled={!feeStructures.length}>
+                    <FileDown className="w-4 h-4" />
+                    Export PDF
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950" onClick={shareFeeStructuresWhatsApp} disabled={!feeStructures.length}>
+                    <Share2 className="w-4 h-4" />
+                    WhatsApp
+                  </Button>
+                  <Dialog open={addFeeOpen} onOpenChange={setAddFeeOpen}>
                   <DialogTrigger asChild>
                     <Button className="gap-2" disabled={!selectedSchool}>
                       <Plus className="w-4 h-4" />
