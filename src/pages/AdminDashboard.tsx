@@ -951,10 +951,8 @@ const AdminDashboard = () => {
                 )}
               </CardHeader>
               <CardContent>
-                {adminSchoolLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+              {adminSchoolLoading ? (
+                  <CardListSkeleton count={2} />
                 ) : !adminSchool ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
