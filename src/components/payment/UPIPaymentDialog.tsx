@@ -542,7 +542,22 @@ export const UPIPaymentDialog = ({
                 </motion.div>
               </div>
 
-              <Button
+              {/* Transaction ID Input */}
+              <div className="space-y-2">
+                <Label htmlFor="transaction-id">UPI Transaction ID / UTR Number</Label>
+                <Input
+                  id="transaction-id"
+                  type="text"
+                  placeholder="e.g. 412345678901"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Find this in your UPI app's payment confirmation
+                </p>
+              </div>
+
                 className="w-full"
                 size="lg"
                 onClick={handleUploadScreenshot}
