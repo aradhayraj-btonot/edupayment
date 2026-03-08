@@ -1312,17 +1312,15 @@ const AdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {paymentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : payments.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No payments recorded yet.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {payments.map((payment) => (
+              {paymentsLoading ? (
+                    <CardListSkeleton count={5} />
+                  ) : payments.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No payments recorded yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {payments.map((payment) => (
                       <div
                         key={payment.id}
                         className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
