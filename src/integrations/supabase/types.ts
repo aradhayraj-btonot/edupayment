@@ -548,6 +548,7 @@ export type Database = {
           created_at: string
           first_name: string
           id: string
+          is_special: boolean
           last_name: string
           parent_email: string | null
           parent_id: string | null
@@ -563,6 +564,7 @@ export type Database = {
           created_at?: string
           first_name: string
           id?: string
+          is_special?: boolean
           last_name: string
           parent_email?: string | null
           parent_id?: string | null
@@ -578,6 +580,7 @@ export type Database = {
           created_at?: string
           first_name?: string
           id?: string
+          is_special?: boolean
           last_name?: string
           parent_email?: string | null
           parent_id?: string | null
