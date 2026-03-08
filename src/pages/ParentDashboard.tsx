@@ -365,6 +365,7 @@ const ParentDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+              <ThemeToggle />
               <Button 
                 variant={unreadCount > 0 ? "default" : "outline"}
                 size="icon" 
