@@ -66,8 +66,8 @@ const Index = () => {
         <Stats />
         <Pricing />
         <Footer />
-        <FloatingSupportWidget />
       </main>
+      <FloatingSupportWidget />
     </>
   );
 };
