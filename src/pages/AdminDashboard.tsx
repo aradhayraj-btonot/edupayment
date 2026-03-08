@@ -648,8 +648,12 @@ const AdminDashboard = () => {
                 </Button>
               </div>
               {/* Summary Cards */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
+              {allStudentFeesLoading ? (
+                <StatGridSkeleton count={4} />
+              ) : (
+              <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Fees Assigned</p>
                     <p className="text-2xl font-bold text-foreground">
@@ -657,7 +661,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                </motion.div>
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Paid</p>
                     <p className="text-2xl font-bold text-success">
@@ -665,7 +671,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                </motion.div>
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Pending</p>
                     <p className="text-2xl font-bold text-warning">
@@ -673,7 +681,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                </motion.div>
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Discounts</p>
                     <p className="text-2xl font-bold text-info">
@@ -681,7 +691,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-              </div>
+                </motion.div>
+              </StaggerContainer>
+              )}
 
               {/* Student-wise Fee Breakdown */}
               <Card>
