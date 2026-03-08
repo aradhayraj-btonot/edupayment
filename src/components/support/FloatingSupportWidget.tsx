@@ -214,7 +214,7 @@ const FloatingSupportWidget = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] bg-background border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="fixed bottom-24 right-6 z-[9998] w-[380px] max-w-[calc(100vw-3rem)] bg-background border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
             style={{ maxHeight: "min(550px, calc(100vh - 8rem))" }}
           >
             {/* Header */}
