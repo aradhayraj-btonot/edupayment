@@ -120,7 +120,6 @@ const Hero = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          </motion.div>
 
           {/* Right Content - Dashboard Preview */}
           <motion.div
