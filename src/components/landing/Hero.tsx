@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle, Play } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, CheckCircle, Play, X } from "lucide-react";
+import { useState } from "react";
 
 const Hero = () => {
+  const [showVideo, setShowVideo] = useState(false);
   const benefits = [
     "Multi-gateway payments",
     "Automated reminders",
