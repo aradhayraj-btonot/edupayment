@@ -87,6 +87,7 @@ export const UPIPaymentDialog = ({
       setScreenshotFile(null);
       setScreenshotPreview(null);
       setSelectedApp(null);
+      setTransactionId("");
     }
   }, [open]);
 
