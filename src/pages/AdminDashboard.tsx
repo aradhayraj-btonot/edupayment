@@ -507,7 +507,7 @@ const AdminDashboard = () => {
                   {activeTab === "payments" && `${payments.length} total payments`}
                   {activeTab === "schools" && (adminSchool ? "Your school details" : "No school assigned")}
                   {activeTab === "fees" && `${feeStructures.length} fee structures`}
-                  
+                  {activeTab === "special" && `${students.filter((s: any) => s.is_special).length} special students (Govt. Scheme)`}
                 </p>
               </div>
             </div>
