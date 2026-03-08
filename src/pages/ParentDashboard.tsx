@@ -982,10 +982,8 @@ const ParentDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {notificationsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+              {notificationsLoading ? (
+                  <CardListSkeleton count={4} />
                 ) : notifications.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
