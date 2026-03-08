@@ -58,33 +58,33 @@ const About = () => {
   return (
     <>
       <Helmet>
-        <title>About EduPay | Aradhay Raj Btonot - School Fee Payment Platform</title>
+        <title>About EduPay | Aradhay Raj - Founder & CEO of BTONOT</title>
         <meta
           name="description"
-          content="Learn about EduPay, the best school fee payment platform created by Aradhay Raj, founder of Btonot. Simplify fee collection with secure UPI payments, instant receipts, and real-time tracking for schools and parents."
+          content="Learn about EduPay, the school fee payment platform built by Aradhay Raj, Founder & CEO of BTONOT. Full-stack developer, AI researcher, and prompt engineer building next-generation AI companies and digital ecosystems."
         />
         <meta
           name="keywords"
-          content="Aradhay Raj, Aradhay Raj Btonot, Btonot, EduPay, edu pay, school fee payment, pay school fees online, school fee management, young entrepreneur, teen founder, education technology, edtech India, school payments, fee collection software, student payments, online school fees"
+          content="Aradhay Raj, BTONOT, Aradhay Raj BTONOT, EduPay, aradhayraj.online, school fee payment, Prodlink, Nexbro AI, NexTrust AI, AI researcher, full-stack developer, prompt engineer, tech visionary, edtech India, school fee management"
         />
-        <meta name="author" content="Aradhay Raj - Btonot" />
+        <meta name="author" content="Aradhay Raj - BTONOT" />
         <link rel="canonical" href="https://edupay.com/about" />
         
         {/* Open Graph */}
-        <meta property="og:title" content="About EduPay | Aradhay Raj Btonot - School Fee Payment" />
+        <meta property="og:title" content="About EduPay | Aradhay Raj - Founder & CEO of BTONOT" />
         <meta
           property="og:description"
-          content="Discover EduPay by Aradhay Raj Btonot. The revolutionary school fee payment platform making fee collection simple and secure for schools and parents across India."
+          content="Meet Aradhay Raj, Founder & CEO of BTONOT. Full-stack developer, AI researcher, and prompt engineer building next-generation AI companies including EduPay, Prodlink, Nexbro AI, and NexTrust AI."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://edupay.com/about" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="About EduPay | Aradhay Raj Btonot" />
+        <meta name="twitter:title" content="About EduPay | Aradhay Raj - BTONOT" />
         <meta
           name="twitter:description"
-          content="Meet Aradhay Raj, founder of Btonot, creator of EduPay - the future of school fee payment in India."
+          content="Meet Aradhay Raj, Founder & CEO of BTONOT — building next-generation AI companies and digital ecosystems. Creator of EduPay, Prodlink, Nexbro AI, and NexTrust AI."
         />
         
         {/* Schema.org JSON-LD */}
@@ -92,16 +92,26 @@ const About = () => {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            name: "EduPay by Aradhay Raj Btonot",
-            description: "School fee payment platform by Aradhay Raj, founder of Btonot",
+            name: "BTONOT",
+            description: "The parent company behind multiple innovative technology and AI ventures, driving digital transformation.",
             founder: {
               "@type": "Person",
               name: "Aradhay Raj",
               jobTitle: "Founder & CEO",
-              affiliation: "Btonot",
+              url: "https://aradhayraj.online",
+              sameAs: [
+                "https://www.linkedin.com/in/aradhay-raj",
+                "https://github.com/aradhay-raj",
+                "https://instagram.com/aradhayrajofficial",
+              ],
+              knowsAbout: ["Full-Stack Development", "AI Research", "Prompt Engineering", "Startup Building"],
             },
             url: "https://edupay.com",
-            sameAs: ["https://twitter.com/btonot"],
+            sameAs: [
+              "https://aradhayraj.online",
+              "https://www.linkedin.com/in/aradhay-raj",
+              "https://github.com/aradhay-raj",
+            ],
           })}
         </script>
       </Helmet>
