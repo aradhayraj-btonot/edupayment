@@ -31,6 +31,8 @@ import {
   Wallet,
   TrendingUp,
   BarChart3,
+  Smartphone,
+  Share,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
