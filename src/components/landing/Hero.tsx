@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle, Play } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, CheckCircle, Play, X } from "lucide-react";
+import { useState } from "react";
 
 const Hero = () => {
+  const [showVideo, setShowVideo] = useState(false);
   const benefits = [
     "Multi-gateway payments",
     "Automated reminders",
@@ -76,12 +78,48 @@ const Hero = () => {
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Button variant="heroOutline" size="xl" className="group">
+              <Button variant="heroOutline" size="xl" className="group" onClick={() => setShowVideo(true)}>
                 <Play className="w-5 h-5" />
                 Watch Demo
               </Button>
             </motion.div>
           </motion.div>
+
+          {/* Video Modal */}
+          <AnimatePresence>
+            {showVideo && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                onClick={() => setShowVideo(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="relative w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-3 right-3 z-10 bg-black/50 text-white hover:bg-black/70 rounded-full"
+                    onClick={() => setShowVideo(false)}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                  <video
+                    src="/demo-video.mp4"
+                    controls
+                    autoPlay
+                    className="w-full aspect-video bg-black"
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Right Content - Dashboard Preview */}
           <motion.div
