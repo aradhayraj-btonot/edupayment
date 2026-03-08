@@ -509,10 +509,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="default" className="gap-2">
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
+              <ThemeToggle />
             </div>
           </div>
         </header>
