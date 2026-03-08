@@ -27,9 +27,23 @@ export interface BlogPost {
   meta_title: string | null;
   meta_description: string | null;
   meta_keywords: string[] | null;
+  category: string | null;
+  tags: string[] | null;
+  view_count: number;
   created_at: string;
   updated_at: string;
 }
+
+export const BLOG_CATEGORIES = [
+  'general',
+  'school-management',
+  'payment-solutions',
+  'education-technology',
+  'tips-and-guides',
+  'product-updates',
+] as const;
+
+export type BlogCategory = typeof BLOG_CATEGORIES[number];
 
 export interface BlogPoll {
   id: string;

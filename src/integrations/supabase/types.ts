@@ -84,6 +84,7 @@ export type Database = {
       blog_posts: {
         Row: {
           author_id: string
+          category: string | null
           content: Json
           cover_image_url: string | null
           created_at: string
@@ -95,11 +96,14 @@ export type Database = {
           published_at: string | null
           slug: string
           status: string
+          tags: string[] | null
           title: string
           updated_at: string
+          view_count: number | null
         }
         Insert: {
           author_id: string
+          category?: string | null
           content?: Json
           cover_image_url?: string | null
           created_at?: string
@@ -111,11 +115,14 @@ export type Database = {
           published_at?: string | null
           slug: string
           status?: string
+          tags?: string[] | null
           title: string
           updated_at?: string
+          view_count?: number | null
         }
         Update: {
           author_id?: string
+          category?: string | null
           content?: Json
           cover_image_url?: string | null
           created_at?: string
@@ -127,8 +134,10 @@ export type Database = {
           published_at?: string | null
           slug?: string
           status?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
+          view_count?: number | null
         }
         Relationships: []
       }
