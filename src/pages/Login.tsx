@@ -111,7 +111,9 @@ const Login = () => {
         <meta property="og:description" content="Sign in to EduPay to manage school fees, payments, and receipts." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://edupay.com/login" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://edupay.com/og-image.png" />
         <meta name="twitter:title" content="Login | EduPay" />
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}

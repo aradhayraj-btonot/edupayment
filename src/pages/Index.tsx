@@ -87,6 +87,8 @@ const Index = () => {
       <Helmet>
         <title>EduPay by Btonot - School Fee Payment Platform | Aradhay Raj</title>
         <meta name="description" content="EduPay by Aradhay Raj Btonot - The best school fee payment platform in India. Pay school fees online with UPI, cards, and net banking. Secure, instant fee collection software." />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
+        <meta name="twitter:image" content="https://edupay.com/og-image.png" />
         <meta name="keywords" content="Aradhay Raj, Aradhay Raj Btonot, Btonot, EduPay, edu pay, school fee payment, pay school fees online, school fee collection, fee management software, education fintech, edtech India" />
         <link rel="canonical" href="https://edupay.com" />
         <script type="application/ld+json">

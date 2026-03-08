@@ -15,7 +15,9 @@ const Security = () => {
         <meta property="og:description" content="Bank-level security for school fee payments. Learn how EduPay protects your data." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://edupay.com/security" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://edupay.com/og-image.png" />
         <meta name="twitter:title" content="Security | EduPay" />
       </Helmet>
       

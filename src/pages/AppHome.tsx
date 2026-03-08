@@ -65,7 +65,9 @@ const AppHome = () => {
         <meta property="og:title" content="Install EduPay App | BTONOT" />
         <meta property="og:description" content="Get the EduPay app for faster school fee management with offline support." />
         <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="https://edupay.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://edupay.com/og-image.png" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
