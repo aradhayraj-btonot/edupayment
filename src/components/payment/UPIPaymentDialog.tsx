@@ -183,6 +183,15 @@ export const UPIPaymentDialog = ({
 
   const handleUploadScreenshot = async () => {
     if (!screenshotFile || !createdPaymentId) return;
+    
+    // Update transaction_id if provided
+    if (transactionId.trim()) {
+      await supabase
+        .from("payments")
+        .update({ transaction_id: transactionId.trim() })
+        .eq("id", createdPaymentId);
+    }
+    
     await onUploadScreenshot(screenshotFile, createdPaymentId);
     onOpenChange(false);
     toast.success("Payment submitted for verification!");
