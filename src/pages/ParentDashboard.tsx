@@ -692,10 +692,8 @@ const ParentDashboard = () => {
                 <CardTitle className="text-base lg:text-lg font-display">All Payments</CardTitle>
               </CardHeader>
               <CardContent>
-                {paymentsLoading ? (
-                  <div className="flex justify-center py-6 lg:py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+              {paymentsLoading ? (
+                  <CardListSkeleton count={5} />
                 ) : payments.length === 0 ? (
                   <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
                     No payment history yet.
