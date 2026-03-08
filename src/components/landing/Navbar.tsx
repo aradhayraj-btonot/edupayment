@@ -54,6 +54,7 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             <Link to="/login">
               <Button variant="ghost" size="sm">
                 Log in
