@@ -778,16 +778,12 @@ const AdminDashboard = () => {
                   <CardTitle className="text-lg font-display">
                     Recent Payments
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Search className="w-4 h-4" />
-                      Search
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </Button>
-                  </div>
+                  <SearchFilter
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Search payments..."
+                    className="w-48"
+                  />
                 </CardHeader>
                 <CardContent>
                   {paymentsLoading ? (
