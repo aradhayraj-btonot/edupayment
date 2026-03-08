@@ -1174,21 +1174,24 @@ const ParentDashboard = () => {
                       onClick={() => {
                         const deferredPrompt = (window as any).__pwaInstallPrompt;
                         if (deferredPrompt) {
-                          alert('Installing EduPay App on your device...');
                           deferredPrompt.prompt();
                           deferredPrompt.userChoice.then((choice: any) => {
-                            if (choice.outcome === 'accepted') {
-                              alert('✅ EduPay App installed successfully! You can now open it from your home screen.');
-                              toast.success('App installed successfully!');
-                            } else {
-                              alert('Installation was cancelled. You can try again anytime.');
-                            }
                             (window as any).__pwaInstallPrompt = null;
+                            if (choice.outcome === 'accepted') {
+                              toast.success('✅ App installed! Open from your home screen.');
+                            }
                           });
                         } else if (window.matchMedia('(display-mode: standalone)').matches) {
-                          alert('✅ EduPay App is already installed on your device! Open it from your home screen.');
+                          toast.info('App is already installed!');
                         } else {
-                          alert('To install the app:\n\n📱 Android: Tap the browser menu (⋮) → "Add to Home Screen"\n\n💻 Desktop: Click the install icon in the address bar\n\n🍎 iPhone/iPad: Use Safari → Share button → "Add to Home Screen"');
+                          // Auto-detect platform and give one-step instruction
+                          const ua = navigator.userAgent;
+                          const isIOS = /iPad|iPhone|iPod/.test(ua);
+                          if (isIOS) {
+                            toast.info('Tap Safari Share button (📤) → "Add to Home Screen"');
+                          } else {
+                            toast.info('Tap browser menu (⋮) → "Add to Home Screen"');
+                          }
                         }
                       }}
                     >
