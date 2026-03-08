@@ -4,15 +4,22 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { BlogPost } from '@/hooks/useBlog';
 
+const categoryLabels: Record<string, string> = {
+  general: 'General',
+  'school-management': 'School Management',
+  'payment-solutions': 'Payment Solutions',
+  'education-technology': 'EdTech',
+  'tips-and-guides': 'Tips & Guides',
+  'product-updates': 'Product Updates',
+};
+
 interface BlogPostCardProps {
   post: BlogPost;
   showStatus?: boolean;
 }
 
 export function BlogPostCard({ post, showStatus }: BlogPostCardProps) {
-  const readingTime = Math.ceil(
-    JSON.stringify(post.content).length / 1000
-  );
+  const readingTime = Math.ceil(JSON.stringify(post.content).length / 1000);
 
   return (
     <Link to={`/blog/${post.slug}`} className="group block h-full">
@@ -24,6 +31,7 @@ export function BlogPostCard({ post, showStatus }: BlogPostCardProps) {
               src={post.cover_image_url}
               alt={post.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
@@ -33,8 +41,8 @@ export function BlogPostCard({ post, showStatus }: BlogPostCardProps) {
             </div>
           )}
           {showStatus && (
-            <Badge 
-              variant={post.status === 'published' ? 'default' : 'secondary'} 
+            <Badge
+              variant={post.status === 'published' ? 'default' : 'secondary'}
               className="absolute top-3 left-3"
             >
               {post.status}
@@ -44,16 +52,19 @@ export function BlogPostCard({ post, showStatus }: BlogPostCardProps) {
 
         {/* Content */}
         <div className="flex-1 p-5 flex flex-col">
-          {/* Keywords */}
-          {post.meta_keywords && post.meta_keywords.length > 0 && (
-            <div className="flex items-center gap-2 mb-3">
-              {post.meta_keywords.slice(0, 2).map((keyword) => (
-                <Badge key={keyword} variant="secondary" className="text-xs font-normal rounded-full">
-                  {keyword}
-                </Badge>
-              ))}
-            </div>
-          )}
+          {/* Category */}
+          <div className="flex items-center gap-2 mb-3">
+            {post.category && (
+              <Badge variant="secondary" className="text-xs font-normal rounded-full">
+                {categoryLabels[post.category] || post.category}
+              </Badge>
+            )}
+            {post.tags?.slice(0, 1).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal rounded-full">
+                #{tag}
+              </Badge>
+            ))}
+          </div>
 
           {/* Title */}
           <h3 className="text-lg font-semibold line-clamp-2 mb-2 group-hover:text-primary transition-colors">
