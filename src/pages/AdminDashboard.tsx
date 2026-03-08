@@ -794,7 +794,11 @@ const AdminDashboard = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {payments.slice(0, 5).map((payment) => (
+                      {payments.filter(p => {
+                        if (!searchQuery) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (p.students?.first_name?.toLowerCase().includes(q) || p.students?.last_name?.toLowerCase().includes(q) || p.payment_method?.toLowerCase().includes(q));
+                      }).slice(0, 5).map((payment) => (
                         <div
                           key={payment.id}
                           className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
