@@ -1117,6 +1117,7 @@ const AdminDashboard = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 {!selectedSchool ? (
