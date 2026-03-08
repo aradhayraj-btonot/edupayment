@@ -705,9 +705,7 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {allStudentFeesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
+                    <TableSkeleton rows={6} cols={7} />
                   ) : allStudentFees.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No fee assignments found.
