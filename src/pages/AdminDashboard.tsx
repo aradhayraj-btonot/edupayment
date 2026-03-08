@@ -389,6 +389,7 @@ const AdminDashboard = () => {
     { icon: ShieldCheck, label: "Verify Payments", key: "verify" },
     { icon: Building, label: "Schools", key: "schools" },
     { icon: Users, label: "Students", key: "students" },
+    { icon: Star, label: "Special Students", key: "special" },
     { icon: CreditCard, label: "Payments", key: "payments" },
     { icon: BarChart3, label: "Fee Structures", key: "fees" },
     { icon: MessageSquare, label: "Support", key: "support" },
