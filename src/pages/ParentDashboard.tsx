@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CardListSkeleton, StatGridSkeleton } from "@/components/ui/dashboard-skeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,9 +230,11 @@ const ParentDashboard = () => {
           {/* Student Info Card */}
           <div className="p-4">
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-              {studentsLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            {studentsLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
                 </div>
               ) : students.length === 0 ? (
                 <div className="text-center py-4 text-muted-foreground text-sm">
@@ -363,6 +367,7 @@ const ParentDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+              <ThemeToggle />
               <Button 
                 variant={unreadCount > 0 ? "default" : "outline"}
                 size="icon" 
@@ -585,10 +590,8 @@ const ParentDashboard = () => {
                       </Button>
                     </CardHeader>
                     <CardContent className="space-y-2 pt-0">
-                      {paymentsLoading ? (
-                        <div className="flex justify-center py-8">
-                          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        </div>
+                    {paymentsLoading ? (
+                        <CardListSkeleton count={3} />
                       ) : completedPayments.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                           <History className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -689,10 +692,8 @@ const ParentDashboard = () => {
                 <CardTitle className="text-base lg:text-lg font-display">All Payments</CardTitle>
               </CardHeader>
               <CardContent>
-                {paymentsLoading ? (
-                  <div className="flex justify-center py-6 lg:py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+              {paymentsLoading ? (
+                  <CardListSkeleton count={5} />
                 ) : payments.length === 0 ? (
                   <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
                     No payment history yet.
@@ -981,10 +982,8 @@ const ParentDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {notificationsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+              {notificationsLoading ? (
+                  <CardListSkeleton count={4} />
                 ) : notifications.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />

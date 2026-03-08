@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { AnimatedCard, StaggerContainer, staggerItem } from "@/components/ui/animated-card";
+import { StatGridSkeleton, TableSkeleton, CardListSkeleton } from "@/components/ui/dashboard-skeleton";
+import { SearchFilter } from "@/components/ui/search-filter";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,7 +102,7 @@ const AdminDashboard = () => {
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [addFeeOpen, setAddFeeOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Data hooks
   const { data: adminSchool, isLoading: adminSchoolLoading } = useAdminSchool();
@@ -505,10 +509,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="default" className="gap-2">
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
+              <ThemeToggle />
             </div>
           </div>
         </header>
@@ -518,15 +519,13 @@ const AdminDashboard = () => {
           {activeTab === "dashboard" && (
             <>
               {/* Stats Grid */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {adminSchoolLoading ? (
+                <StatGridSkeleton count={4} />
+              ) : (
+              <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat, index) => (
-                  <motion.div
-                    key={stat.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-md transition-shadow">
+                  <motion.div key={stat.title} variants={staggerItem}>
+                    <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div>
@@ -566,7 +565,8 @@ const AdminDashboard = () => {
                     </Card>
                   </motion.div>
                 ))}
-              </div>
+              </StaggerContainer>
+              )}
             </>
           )}
 
@@ -648,8 +648,12 @@ const AdminDashboard = () => {
                 </Button>
               </div>
               {/* Summary Cards */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
+              {allStudentFeesLoading ? (
+                <StatGridSkeleton count={4} />
+              ) : (
+              <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Fees Assigned</p>
                     <p className="text-2xl font-bold text-foreground">
@@ -657,7 +661,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                </motion.div>
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Paid</p>
                     <p className="text-2xl font-bold text-success">
@@ -665,7 +671,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                </motion.div>
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Pending</p>
                     <p className="text-2xl font-bold text-warning">
@@ -673,7 +681,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                </motion.div>
+                <motion.div variants={staggerItem}>
+                <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                   <CardContent className="p-6">
                     <p className="text-sm text-muted-foreground mb-1">Total Discounts</p>
                     <p className="text-2xl font-bold text-info">
@@ -681,7 +691,9 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-              </div>
+                </motion.div>
+              </StaggerContainer>
+              )}
 
               {/* Student-wise Fee Breakdown */}
               <Card>
@@ -693,9 +705,7 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {allStudentFeesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
+                    <TableSkeleton rows={6} cols={7} />
                   ) : allStudentFees.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No fee assignments found.
@@ -766,29 +776,27 @@ const AdminDashboard = () => {
                   <CardTitle className="text-lg font-display">
                     Recent Payments
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Search className="w-4 h-4" />
-                      Search
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </Button>
-                  </div>
+                  <SearchFilter
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Search payments..."
+                    className="w-48"
+                  />
                 </CardHeader>
                 <CardContent>
-                  {paymentsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
+                {paymentsLoading ? (
+                    <CardListSkeleton count={5} />
                   ) : payments.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No payments recorded yet.
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {payments.slice(0, 5).map((payment) => (
+                      {payments.filter(p => {
+                        if (!searchQuery) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (p.students?.first_name?.toLowerCase().includes(q) || p.students?.last_name?.toLowerCase().includes(q) || p.payment_method?.toLowerCase().includes(q));
+                      }).slice(0, 5).map((payment) => (
                         <div
                           key={payment.id}
                           className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
@@ -941,10 +949,8 @@ const AdminDashboard = () => {
                 )}
               </CardHeader>
               <CardContent>
-                {adminSchoolLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+              {adminSchoolLoading ? (
+                  <CardListSkeleton count={2} />
                 ) : !adminSchool ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -1200,9 +1206,7 @@ const AdminDashboard = () => {
                     Please add a school first to manage students.
                   </div>
                 ) : studentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
+                  <TableSkeleton rows={6} cols={5} />
                 ) : (
                   <StudentListGrouped
                     students={students}
@@ -1306,17 +1310,15 @@ const AdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {paymentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : payments.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No payments recorded yet.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {payments.map((payment) => (
+              {paymentsLoading ? (
+                    <CardListSkeleton count={5} />
+                  ) : payments.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No payments recorded yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {payments.map((payment) => (
                       <div
                         key={payment.id}
                         className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
@@ -1369,11 +1371,9 @@ const AdminDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingPaymentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : pendingPayments.length === 0 ? (
+              {pendingPaymentsLoading ? (
+                    <CardListSkeleton count={3} />
+                  ) : pendingPayments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success" />
                     <p>No pending payments to verify.</p>
