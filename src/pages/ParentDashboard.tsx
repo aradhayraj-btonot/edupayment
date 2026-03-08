@@ -230,9 +230,11 @@ const ParentDashboard = () => {
           {/* Student Info Card */}
           <div className="p-4">
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-              {studentsLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            {studentsLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
                 </div>
               ) : students.length === 0 ? (
                 <div className="text-center py-4 text-muted-foreground text-sm">
