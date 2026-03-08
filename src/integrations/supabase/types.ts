@@ -716,7 +716,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      blog_poll_vote_counts: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          option_index: number | null
+          poll_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          option_index?: number | null
+          poll_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          option_index?: number | null
+          poll_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "blog_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_has_school_access: {
