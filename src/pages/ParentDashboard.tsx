@@ -764,129 +764,206 @@ const ParentDashboard = () => {
           )}
 
           {activeTab === "pay" && (
-            <div className="space-y-4 lg:space-y-6">
-              {/* School Payment Info */}
-              <Card>
-                <CardHeader className="pb-2 lg:pb-4">
-                  <CardTitle className="text-base lg:text-lg font-display flex items-center gap-2">
-                    <QrCode className="w-4 h-4 lg:w-5 lg:h-5" />
-                    Pay School Fees
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!studentSchool ? (
-                    <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
-                      No school linked to your student yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
-                      {/* QR Code Section */}
-                      <div className="flex flex-col items-center justify-center p-4 lg:p-6 bg-secondary/30 rounded-xl">
-                        {studentSchool.upi_qr_code_url ? (
-                          <img 
-                            src={studentSchool.upi_qr_code_url} 
-                            alt="Payment QR Code" 
-                            className="w-40 h-40 lg:w-48 lg:h-48 rounded-lg mb-3 lg:mb-4"
-                          />
-                        ) : (
-                          <div className="w-40 h-40 lg:w-48 lg:h-48 bg-secondary rounded-lg flex items-center justify-center mb-3 lg:mb-4">
-                            <QrCode className="w-20 h-20 lg:w-24 lg:h-24 text-muted-foreground" />
-                          </div>
-                        )}
-                        <p className="text-xs lg:text-sm text-muted-foreground text-center">
-                          Scan with any UPI app
-                        </p>
-                      </div>
-
-                      {/* UPI Details Section */}
-                      <div className="space-y-4 lg:space-y-6">
-                        <div>
-                          <p className="text-xs lg:text-sm text-muted-foreground mb-1">School</p>
-                          <p className="text-base lg:text-lg font-semibold text-foreground">{studentSchool.name}</p>
-                        </div>
-                        
-                        {studentSchool.upi_id && (
-                          <div>
-                            <p className="text-xs lg:text-sm text-muted-foreground mb-1">UPI ID</p>
-                            <div className="flex items-center gap-2">
-                              <code className="flex-1 bg-secondary px-3 py-2 lg:px-4 lg:py-3 rounded-lg text-foreground font-mono text-xs lg:text-sm overflow-x-auto">
-                                {studentSchool.upi_id}
-                              </code>
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                className="w-9 h-9 lg:w-10 lg:h-10 flex-shrink-0"
-                                onClick={() => copyToClipboard(studentSchool.upi_id!)}
-                              >
-                                <Copy className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="border-t pt-3 lg:pt-4">
-                          <p className="text-xs lg:text-sm text-muted-foreground mb-1">Pending Amount</p>
-                          <p className="text-2xl lg:text-3xl font-bold text-coral">{feesSummary.pending}</p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <p className="text-xs lg:text-sm font-medium text-foreground">Pay using:</p>
-                          <div className="grid grid-cols-4 gap-1.5 lg:gap-2">
-                            {["GPay", "PhonePe", "Paytm", "BHIM"].map((app) => (
-                              <button 
-                                key={app}
-                                className="p-2 lg:p-3 bg-secondary rounded-lg text-xs lg:text-sm font-medium hover:bg-primary/10 transition-colors"
-                              >
-                                {app}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg lg:text-2xl font-display font-bold text-foreground">Pay Fees</h2>
+                  <p className="text-xs lg:text-sm text-muted-foreground">
+                    {studentFees.length} pending {studentFees.length === 1 ? 'fee' : 'fees'} • Total: <span className="font-semibold text-coral">₹{totalPending.toLocaleString('en-IN')}</span>
+                  </p>
+                </div>
+                {totalPending > 0 && (
+                  <div className="w-10 h-10 rounded-xl bg-coral/10 flex items-center justify-center">
+                    <IndianRupee className="w-5 h-5 text-coral" />
+                  </div>
+                )}
+              </div>
 
               {/* Pending Fees List */}
-              <Card>
-                <CardHeader className="pb-2 lg:pb-4">
-                  <CardTitle className="text-base lg:text-lg font-display">Select Fee to Pay</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 lg:space-y-3 pt-0">
-                  {studentFees.length === 0 ? (
-                    <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
-                      No pending fees.
-                    </div>
-                  ) : (
-                    studentFees.map((fee) => (
-                      <div
+              {studentFees.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center justify-center py-16 text-center"
+                >
+                  <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-4">
+                    <CheckCircle className="w-10 h-10 text-success" />
+                  </div>
+                  <p className="text-lg font-semibold text-foreground mb-1">All Clear! 🎉</p>
+                  <p className="text-sm text-muted-foreground">No pending fees. You're all caught up.</p>
+                </motion.div>
+              ) : (
+                <div className="space-y-3">
+                  {studentFees.map((fee, index) => {
+                    const feeAmount = Number(fee.amount) - Number(fee.discount || 0);
+                    const isOverdue = new Date(fee.due_date) < new Date();
+                    const isSelected = selectedFeeForPayment?.id === fee.id && !paymentDialogOpen;
+
+                    return (
+                      <motion.div
                         key={fee.id}
-                        className="p-3 lg:p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.06 }}
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground text-sm lg:text-base truncate">
-                              {fee.fee_structures?.name || 'Fee'}
-                            </p>
-                            <p className="text-xs lg:text-sm text-muted-foreground">
-                              Due: {format(new Date(fee.due_date), 'dd MMM yyyy')}
-                            </p>
+                        {/* Fee Card */}
+                        <button
+                          onClick={() => setSelectedFeeForPayment(isSelected ? null : fee)}
+                          className={`w-full text-left rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
+                            isSelected
+                              ? 'border-primary bg-primary/5 shadow-lg'
+                              : 'border-border bg-card hover:border-primary/30 hover:shadow-md active:scale-[0.98]'
+                          }`}
+                        >
+                          <div className="p-4">
+                            <div className="flex items-start gap-3">
+                              {/* Status Indicator */}
+                              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                isOverdue ? 'bg-destructive/10' : 'bg-warning/10'
+                              }`}>
+                                {isOverdue ? (
+                                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                                ) : (
+                                  <Clock className="w-5 h-5 text-warning" />
+                                )}
+                              </div>
+
+                              {/* Fee Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <p className="font-semibold text-foreground text-sm truncate">
+                                    {fee.fee_structures?.name || 'Fee'}
+                                  </p>
+                                  {isOverdue && (
+                                    <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 flex-shrink-0">
+                                      Overdue
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>Due {format(new Date(fee.due_date), 'dd MMM yyyy')}</span>
+                                </div>
+                                {fee.fee_structures?.fee_type && (
+                                  <Badge variant="outline" className="text-[10px] mt-1.5 capitalize">
+                                    {fee.fee_structures.fee_type}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Amount + Arrow */}
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-foreground">
+                                    ₹{feeAmount.toLocaleString('en-IN')}
+                                  </p>
+                                  {Number(fee.discount || 0) > 0 && (
+                                    <p className="text-[10px] text-success">
+                                      -₹{Number(fee.discount).toLocaleString('en-IN')} off
+                                    </p>
+                                  )}
+                                </div>
+                                <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isSelected ? 'rotate-90' : ''}`} />
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-                            <p className="font-bold text-sm lg:text-lg">
-                              ₹{(Number(fee.amount) - Number(fee.discount || 0)).toLocaleString('en-IN')}
-                            </p>
-                            <Button size="sm" className="h-8 lg:h-9 px-3 lg:px-4" onClick={() => handlePayFee(fee)}>
-                              Pay
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
+                        </button>
+
+                        {/* Expanded Payment Section */}
+                        <AnimatePresence>
+                          {isSelected && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-2 rounded-2xl border border-primary/20 bg-card p-4 space-y-4">
+                                {/* Amount Summary */}
+                                <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5">
+                                  <span className="text-sm font-medium text-foreground">Amount to Pay</span>
+                                  <span className="text-xl font-bold text-primary">₹{feeAmount.toLocaleString('en-IN')}</span>
+                                </div>
+
+                                {/* QR Code */}
+                                {studentSchool?.upi_id && (
+                                  <div className="flex flex-col items-center p-4 rounded-xl bg-secondary/50">
+                                    <div className="bg-white p-3 rounded-xl shadow-sm mb-3">
+                                      <QrCode className="w-32 h-32 text-foreground" />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mb-2">Scan with any UPI app</p>
+                                    <div className="flex items-center gap-2 w-full">
+                                      <code className="flex-1 bg-background px-3 py-2 rounded-lg text-xs font-mono text-foreground text-center truncate">
+                                        {studentSchool.upi_id}
+                                      </code>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="w-8 h-8 flex-shrink-0"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          copyToClipboard(studentSchool.upi_id!);
+                                        }}
+                                      >
+                                        <Copy className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* UPI App Buttons */}
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-2">Pay directly via</p>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {[
+                                      { name: "GPay", icon: "💳", color: "bg-blue-500/10 hover:bg-blue-500/20" },
+                                      { name: "PhonePe", icon: "📱", color: "bg-purple-500/10 hover:bg-purple-500/20" },
+                                      { name: "Paytm", icon: "💰", color: "bg-sky-500/10 hover:bg-sky-500/20" },
+                                      { name: "BHIM", icon: "🏦", color: "bg-green-500/10 hover:bg-green-500/20" },
+                                    ].map((app) => (
+                                      <button
+                                        key={app.name}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handlePayFee(fee);
+                                        }}
+                                        className={`flex flex-col items-center gap-1 p-3 rounded-xl ${app.color} transition-all active:scale-95`}
+                                      >
+                                        <span className="text-xl">{app.icon}</span>
+                                        <span className="text-[10px] font-medium text-foreground">{app.name}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Pay Button */}
+                                <Button
+                                  className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-primary to-primary/80 shadow-lg"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePayFee(fee);
+                                  }}
+                                >
+                                  <CreditCard className="w-5 h-5 mr-2" />
+                                  Pay ₹{feeAmount.toLocaleString('en-IN')}
+                                </Button>
+
+                                {!studentSchool?.upi_id && (
+                                  <p className="text-xs text-center text-muted-foreground">
+                                    School has not configured UPI payments yet. Please contact the school.
+                                  </p>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
