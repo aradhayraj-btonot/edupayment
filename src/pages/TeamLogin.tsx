@@ -80,7 +80,13 @@ const TeamLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <>
+      <Helmet>
+        <title>Team Login | EduPay by BTONOT</title>
+        <meta name="description" content="Team member login for EduPay administration. Access the team dashboard to manage schools, payments, and support." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
