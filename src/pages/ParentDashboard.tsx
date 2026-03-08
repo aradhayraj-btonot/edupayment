@@ -1172,18 +1172,23 @@ const ParentDashboard = () => {
                     <Button
                       className="w-full"
                       onClick={() => {
-                        // Try to trigger the PWA install prompt
                         const deferredPrompt = (window as any).__pwaInstallPrompt;
                         if (deferredPrompt) {
+                          alert('Installing EduPay App on your device...');
                           deferredPrompt.prompt();
                           deferredPrompt.userChoice.then((choice: any) => {
                             if (choice.outcome === 'accepted') {
+                              alert('✅ EduPay App installed successfully! You can now open it from your home screen.');
                               toast.success('App installed successfully!');
+                            } else {
+                              alert('Installation was cancelled. You can try again anytime.');
                             }
                             (window as any).__pwaInstallPrompt = null;
                           });
+                        } else if (window.matchMedia('(display-mode: standalone)').matches) {
+                          alert('✅ EduPay App is already installed on your device! Open it from your home screen.');
                         } else {
-                          toast.info('Tap the browser menu (⋮) and select "Add to Home Screen" or "Install App"');
+                          alert('To install the app:\n\n📱 Android: Tap the browser menu (⋮) → "Add to Home Screen"\n\n💻 Desktop: Click the install icon in the address bar\n\n🍎 iPhone/iPad: Use Safari → Share button → "Add to Home Screen"');
                         }
                       }}
                     >
