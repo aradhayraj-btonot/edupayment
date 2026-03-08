@@ -121,13 +121,22 @@ export const UPIPaymentDialog = ({
     setSelectedApp(app.scheme);
     const link = generateUPILink(app.scheme);
     
-    // Try to open the UPI app
-    window.location.href = link;
+    if (!link) {
+      toast.error("Unable to generate payment link. Please scan the QR code instead.");
+      return;
+    }
+
+    // Use a temporary anchor to trigger deep link without navigating away
+    const anchor = document.createElement("a");
+    anchor.href = link;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     
-    // Show confirmation after a short delay
-    setTimeout(() => {
-      toast.info("Complete payment in your UPI app, then return here to confirm");
-    }, 1000);
+    toast.info("Complete payment in your UPI app, then return here to confirm", {
+      duration: 5000,
+    });
   };
 
   const copyToClipboard = (text: string) => {
