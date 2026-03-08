@@ -519,15 +519,13 @@ const AdminDashboard = () => {
           {activeTab === "dashboard" && (
             <>
               {/* Stats Grid */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {adminSchoolLoading ? (
+                <StatGridSkeleton count={4} />
+              ) : (
+              <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat, index) => (
-                  <motion.div
-                    key={stat.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-md transition-shadow">
+                  <motion.div key={stat.title} variants={staggerItem}>
+                    <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div>
@@ -567,7 +565,8 @@ const AdminDashboard = () => {
                     </Card>
                   </motion.div>
                 ))}
-              </div>
+              </StaggerContainer>
+              )}
             </>
           )}
 
