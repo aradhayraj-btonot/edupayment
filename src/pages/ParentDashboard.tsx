@@ -590,10 +590,8 @@ const ParentDashboard = () => {
                       </Button>
                     </CardHeader>
                     <CardContent className="space-y-2 pt-0">
-                      {paymentsLoading ? (
-                        <div className="flex justify-center py-8">
-                          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        </div>
+                    {paymentsLoading ? (
+                        <CardListSkeleton count={3} />
                       ) : completedPayments.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                           <History className="w-10 h-10 mx-auto mb-2 opacity-30" />
