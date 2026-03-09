@@ -848,11 +848,22 @@ const ParentDashboard = () => {
                                   <Calendar className="w-3 h-3" />
                                   <span>Due {format(new Date(fee.due_date), 'dd MMM yyyy')}</span>
                                 </div>
-                                {fee.fee_structures?.fee_type && (
-                                  <Badge variant="outline" className="text-[10px] mt-1.5 capitalize">
-                                    {fee.fee_structures.fee_type}
-                                  </Badge>
-                                )}
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                  {fee.fee_structures?.fee_type && (
+                                    <Badge variant="outline" className="text-[10px] capitalize">
+                                      {fee.fee_structures.fee_type}
+                                    </Badge>
+                                  )}
+                                  {/* Government Scheme Badge for special students with 100% discount on recurring fees */}
+                                  {selectedStudent?.is_special && 
+                                   Number(fee.discount || 0) > 0 && 
+                                   Number(fee.discount) >= Number(fee.amount) &&
+                                   (fee.fee_structures?.recurrence_type === 'monthly' || fee.fee_structures?.recurrence_type === 'annually') && (
+                                    <Badge className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 hover:bg-amber-500/20">
+                                      🏛️ Govt. Scheme - 100% Discount
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Amount + Arrow */}
