@@ -22,6 +22,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const AppHome = lazy(() => import("./pages/AppHome"));
+const Founder = lazy(() => import("./pages/Founder"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
