@@ -446,6 +446,29 @@ const ParentDashboard = () => {
                 ))}
               </div>
 
+              {/* Government Scheme Banner for Special Students */}
+              {selectedStudent?.is_special && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-400/10 border border-amber-500/20 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl">🏛️</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-sm">Government Fee Scheme</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Your child is enrolled in the Government Scheme — <span className="text-amber-600 font-medium">recurring fees are 100% free</span>
+                      </p>
+                    </div>
+                  </div>
+                  {/* Decorative element */}
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-amber-500/5 blur-xl" />
+                </motion.div>
+              )}
+
               {/* Balance Card - App Style */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
