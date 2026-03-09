@@ -22,6 +22,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const AppHome = lazy(() => import("./pages/AppHome"));
+const Founder = lazy(() => import("./pages/Founder"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/apphome" element={<AppHome />} />
+                <Route path="/founder" element={<Founder />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/team-login" element={<TeamLogin />} />
                 <Route
