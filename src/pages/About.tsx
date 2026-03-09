@@ -246,148 +246,52 @@ const About = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-center mb-12"
+              className="max-w-3xl mx-auto"
             >
-              <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                Meet the Founder
-              </span>
-              <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-                The Visionary Behind EduPay
-              </h2>
-            </motion.div>
+              <div className="text-center mb-8">
+                <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                  Meet the Founder
+                </span>
+                <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
+                  The Visionary Behind EduPay
+                </h2>
+              </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="max-w-4xl mx-auto"
-            >
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden hover:shadow-xl transition-shadow">
                 <CardContent className="p-0">
-                  <div className="grid md:grid-cols-2 gap-0">
-                    {/* Founder Image */}
-                    <div className="bg-gradient-to-br from-primary via-primary/80 to-accent p-8 flex flex-col items-center justify-center text-center">
-                      <div className="w-40 h-40 rounded-full overflow-hidden mb-6 border-4 border-primary-foreground/20 shadow-lg">
-                        <img
-                          src={founderImage}
-                          alt="Aradhay Raj - Founder & CEO of BTONOT"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <h3 className="text-2xl font-display font-bold text-primary-foreground mb-2">
-                        Aradhay Raj
-                      </h3>
-                      <p className="text-primary-foreground/80 mb-1">Founder & CEO, BTONOT</p>
-                      <p className="text-primary-foreground/60 text-sm mb-4">Full-Stack Developer · AI Researcher · Prompt Engineer</p>
-                      <div className="flex items-center gap-3">
-                        <a
-                          href="https://www.linkedin.com/in/aradhay-raj"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-                        >
-                          <Linkedin className="w-5 h-5 text-primary-foreground" />
-                        </a>
-                        <a
-                          href="https://github.com/aradhay-raj"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-                        >
-                          <Github className="w-5 h-5 text-primary-foreground" />
-                        </a>
-                        <a
-                          href="https://instagram.com/aradhayrajofficial"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-                        >
-                          <Instagram className="w-5 h-5 text-primary-foreground" />
-                        </a>
-                        <a
-                          href="mailto:aradhayrajbusiness@gmail.com"
-                          className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-                        >
-                          <Mail className="w-5 h-5 text-primary-foreground" />
-                        </a>
-                        <a
-                          href="https://aradhayraj.online"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-                        >
-                          <ExternalLink className="w-5 h-5 text-primary-foreground" />
-                        </a>
-                      </div>
+                  <div className="flex flex-col sm:flex-row items-center gap-6 p-8">
+                    <div className="w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-primary/20 shadow-lg shrink-0">
+                      <img
+                        src={founderImage}
+                        alt="Aradhay Raj - Founder & CEO of BTONOT"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-
-                    {/* Founder Bio */}
-                    <div className="p-8">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Award className="w-5 h-5 text-primary" />
-                        <span className="text-sm font-medium text-primary">Tech Visionary & Entrepreneur</span>
-                      </div>
-                      <h4 className="text-xl font-semibold text-foreground mb-4">
-                        Building Next-Generation AI Companies
-                      </h4>
-                      <div className="space-y-4 text-muted-foreground">
-                        <p>
-                          <strong className="text-foreground">Aradhay Raj</strong> is the Founder & CEO of{" "}
-                          <strong className="text-primary">BTONOT</strong>, the parent company behind multiple
-                          innovative technology and AI ventures driving digital transformation.
-                        </p>
-                        <p>
-                          Starting his journey as a web and app developer, Aradhay expanded into artificial
-                          intelligence, prompt engineering, research, and automation systems. He combines deep
-                          technical skills with creative execution and strategic thinking.
-                        </p>
-                        <p>
-                          EduPay is one of Aradhay's flagship products under BTONOT, born from observing
-                          the challenges schools and parents face with fee management. His other ventures include{" "}
-                          <strong className="text-foreground">Prodlink</strong> (social media platform),{" "}
-                          <strong className="text-foreground">Nexbro AI</strong> (intelligent automation), and{" "}
-                          <strong className="text-foreground">NexTrust AI</strong> (trust & decision support systems).
-                        </p>
-                      </div>
-
-                      <div className="mt-6 pt-6 border-t border-border">
-                        <div className="grid grid-cols-4 gap-3 text-center">
-                          <div>
-                            <Code className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-xs font-medium text-foreground">Full-Stack Dev</p>
-                          </div>
-                          <div>
-                            <Brain className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-xs font-medium text-foreground">AI Research</p>
-                          </div>
-                          <div>
-                            <Cpu className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-xs font-medium text-foreground">Prompt Eng.</p>
-                          </div>
-                          <div>
-                            <Rocket className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-xs font-medium text-foreground">Startup Builder</p>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="text-center sm:text-left flex-1">
+                      <h3 className="text-2xl font-display font-bold text-foreground mb-1">Aradhay Raj</h3>
+                      <p className="text-muted-foreground mb-1">Founder & CEO, BTONOT</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Full-Stack Developer · AI Researcher · Prompt Engineer · Tech Visionary
+                      </p>
+                      <p className="text-muted-foreground text-sm mb-4">
+                        Building next-generation AI companies and digital ecosystems that solve real-world problems.
+                      </p>
+                      <Link to="/founder">
+                        <Button variant="default" className="gap-2">
+                          View Full Profile
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
 
-            {/* Quote */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="max-w-3xl mx-auto mt-12 text-center"
-            >
-              <blockquote className="text-xl md:text-2xl font-display italic text-muted-foreground">
+              <blockquote className="text-center mt-10 text-xl md:text-2xl font-display italic text-muted-foreground">
                 "To build human-centric, intelligent technology that solves real-world problems,
                 empowers businesses and creators, and shapes the future of digital experiences through AI."
               </blockquote>
-              <cite className="block mt-4 text-foreground font-medium">— Aradhay Raj, Founder & CEO of BTONOT</cite>
+              <cite className="block mt-4 text-center text-foreground font-medium">— Aradhay Raj, Founder & CEO of BTONOT</cite>
             </motion.div>
           </div>
         </section>
