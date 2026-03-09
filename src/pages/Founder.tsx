@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import founderImage from "@/assets/founder-aradhay-raj.png";
 
+const customEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 const stagger = {
   hidden: {},
   visible: {
@@ -24,7 +26,7 @@ const fadeUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.6, ease: customEase },
   },
 };
 
@@ -33,7 +35,7 @@ const fadeScale = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.7, ease: customEase },
   },
 };
 
@@ -42,7 +44,7 @@ const slideLeft = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.7, ease: customEase },
   },
 };
 
@@ -51,7 +53,7 @@ const slideRight = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.7, ease: customEase },
   },
 };
 
