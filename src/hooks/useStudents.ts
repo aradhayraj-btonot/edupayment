@@ -14,6 +14,7 @@ export interface Student {
   roll_number: string | null;
   admission_date: string | null;
   transport_charge: number;
+  is_special: boolean;
   created_at: string;
   updated_at: string;
 }
