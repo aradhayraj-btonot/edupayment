@@ -20,6 +20,15 @@ function normalizeFrom(raw: string | null | undefined) {
 
 const RESEND_FROM = normalizeFrom(Deno.env.get("RESEND_FROM"));
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -106,6 +115,22 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields: school_id, title, message");
     }
 
+    if (title.length > 200 || message.length > 2000) {
+      throw new Error("Input exceeds allowed length (title: 200, message: 2000)");
+    }
+
+    // Rate limiting: max 10 notifications per school per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", school_id)
+      .gte("created_at", oneHourAgo);
+
+    if ((recentCount ?? 0) >= 10) {
+      throw new Error("Rate limit exceeded. Max 10 notifications per school per hour.");
+    }
+
     // 1. Save notification to database
     const { data: notification, error: notifError } = await supabase
       .from("notifications")
@@ -184,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">📢 ${title}</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">📢 ${escapeHtml(title)}</h1>
             <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">
               From ${schoolName}
             </p>
@@ -196,7 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
             
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
-              <p style="margin: 0; white-space: pre-wrap;">${message}</p>
+              <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</p>
             </div>
             
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
