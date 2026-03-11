@@ -1,18 +1,21 @@
+import { lazy, Suspense } from "react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
-import Features from "@/components/landing/Features";
-import HowItWorks from "@/components/landing/HowItWorks";
-import Stats from "@/components/landing/Stats";
-import Testimonials from "@/components/landing/Testimonials";
-import UseCases from "@/components/landing/UseCases";
-import Integrations from "@/components/landing/Integrations";
-import TrustSecurity from "@/components/landing/TrustSecurity";
-import Pricing from "@/components/landing/Pricing";
-import FAQ from "@/components/landing/FAQ";
-import CTASection from "@/components/landing/CTASection";
-import Footer from "@/components/landing/Footer";
-import FloatingSupportWidget from "@/components/support/FloatingSupportWidget";
+
+// Lazy-load below-fold sections to reduce initial JS
+const Features = lazy(() => import("@/components/landing/Features"));
+const HowItWorks = lazy(() => import("@/components/landing/HowItWorks"));
+const Stats = lazy(() => import("@/components/landing/Stats"));
+const Testimonials = lazy(() => import("@/components/landing/Testimonials"));
+const UseCases = lazy(() => import("@/components/landing/UseCases"));
+const Integrations = lazy(() => import("@/components/landing/Integrations"));
+const TrustSecurity = lazy(() => import("@/components/landing/TrustSecurity"));
+const Pricing = lazy(() => import("@/components/landing/Pricing"));
+const FAQ = lazy(() => import("@/components/landing/FAQ"));
+const CTASection = lazy(() => import("@/components/landing/CTASection"));
+const Footer = lazy(() => import("@/components/landing/Footer"));
+const FloatingSupportWidget = lazy(() => import("@/components/support/FloatingSupportWidget"));
 
 const Index = () => {
   const structuredData = {
@@ -104,19 +107,23 @@ const Index = () => {
       <main className="min-h-screen">
         <Navbar />
         <Hero />
-        <Features />
-        <HowItWorks />
-        <Stats />
-        <Testimonials />
-        <UseCases />
-        <Integrations />
-        <TrustSecurity />
-        <Pricing />
-        <FAQ />
-        <CTASection />
-        <Footer />
+        <Suspense fallback={null}>
+          <Features />
+          <HowItWorks />
+          <Stats />
+          <Testimonials />
+          <UseCases />
+          <Integrations />
+          <TrustSecurity />
+          <Pricing />
+          <FAQ />
+          <CTASection />
+          <Footer />
+        </Suspense>
       </main>
-      <FloatingSupportWidget />
+      <Suspense fallback={null}>
+        <FloatingSupportWidget />
+      </Suspense>
     </>
   );
 };
