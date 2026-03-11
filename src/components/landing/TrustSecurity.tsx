@@ -70,7 +70,7 @@ const TrustSecurity = () => {
                     <point.icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground text-sm">{point.title}</h4>
+                    <h3 className="font-semibold text-foreground text-sm">{point.title}</h3>
                     <p className="text-xs text-muted-foreground">{point.description}</p>
                   </div>
                 </motion.div>
