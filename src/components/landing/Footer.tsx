@@ -97,7 +97,7 @@ const Footer = () => {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-display font-semibold mb-4">Legal</h4>
+            <h3 className="font-display font-semibold mb-4">Legal</h3>
             <ul className="space-y-3">
               {links.legal.map((link) => (
                 <li key={link.name}>
