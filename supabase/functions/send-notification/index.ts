@@ -115,6 +115,22 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields: school_id, title, message");
     }
 
+    if (title.length > 200 || message.length > 2000) {
+      throw new Error("Input exceeds allowed length (title: 200, message: 2000)");
+    }
+
+    // Rate limiting: max 10 notifications per school per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", school_id)
+      .gte("created_at", oneHourAgo);
+
+    if ((recentCount ?? 0) >= 10) {
+      throw new Error("Rate limit exceeded. Max 10 notifications per school per hour.");
+    }
+
     // 1. Save notification to database
     const { data: notification, error: notifError } = await supabase
       .from("notifications")
