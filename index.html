@@ -10,18 +10,29 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700;800&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700;800&display=swap" /></noscript>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        try {
-          await OneSignal.init({
-            appId: "3602ef49-1f01-4688-bccf-df544d02fb09",
+      function loadOneSignal() {
+        if (document.querySelector('script[src*="OneSignalSDK"]')) return;
+        var s = document.createElement('script');
+        s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+        s.defer = true;
+        s.onload = function() {
+          OneSignalDeferred.push(async function(OneSignal) {
+            try {
+              await OneSignal.init({
+                appId: "3602ef49-1f01-4688-bccf-df544d02fb09",
+              });
+            } catch (e) {}
           });
-        } catch (e) {
-          // Silently handle domain mismatch errors
-        }
-      });
+        };
+        document.head.appendChild(s);
+      }
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadOneSignal, { timeout: 3000 });
+      } else {
+        setTimeout(loadOneSignal, 2000);
+      }
     </script>
     <meta name="google-site-verification" content="iqtpUMavNYgQV7Xt1p0jBpuQzFkUEaPh892DmISEzO8" />
     <title>EduPay by Btonot - School Fee Payment Platform | Aradhay Raj</title>
