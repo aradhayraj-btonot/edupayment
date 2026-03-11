@@ -14,9 +14,13 @@
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "3602ef49-1f01-4688-bccf-df544d02fb09",
-        });
+        try {
+          await OneSignal.init({
+            appId: "3602ef49-1f01-4688-bccf-df544d02fb09",
+          });
+        } catch (e) {
+          // Silently handle domain mismatch errors
+        }
       });
     </script>
     <meta name="google-site-verification" content="iqtpUMavNYgQV7Xt1p0jBpuQzFkUEaPh892DmISEzO8" />
