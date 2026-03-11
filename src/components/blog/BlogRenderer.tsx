@@ -123,16 +123,18 @@ function PollRenderer({ pollId }: { pollId: string }) {
         setPoll(data as BlogPoll);
       }
 
-      // Fetch vote counts
+      // Fetch vote counts via secure view (hides voter_ip)
       const { data: voteData } = await supabase
-        .from('blog_poll_votes')
+        .from('blog_poll_vote_counts')
         .select('option_index')
         .eq('poll_id', pollId);
 
       if (voteData) {
         const counts: Record<number, number> = {};
-        voteData.forEach((v) => {
-          counts[v.option_index] = (counts[v.option_index] || 0) + 1;
+        voteData.forEach((v: any) => {
+          if (v.option_index != null) {
+            counts[v.option_index] = (counts[v.option_index] || 0) + 1;
+          }
         });
         setVotes(counts);
       }

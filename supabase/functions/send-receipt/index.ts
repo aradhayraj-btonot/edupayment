@@ -189,10 +189,10 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("id", student.school_id)
       .single();
 
-    const schoolName = school?.name || "School";
-    const studentName = `${student.first_name} ${student.last_name}`;
-    const studentClass = student.section ? `${student.class} - ${student.section}` : student.class;
-    const feeName = feeStructure?.name || "Fee Payment";
+    const schoolName = escapeHtml(school?.name || "School");
+    const studentName = escapeHtml(`${student.first_name} ${student.last_name}`);
+    const studentClass = escapeHtml(student.section ? `${student.class} - ${student.section}` : student.class);
+    const feeName = escapeHtml(feeStructure?.name || "Fee Payment");
     const paymentDate = new Date(payment.payment_date || new Date()).toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'long',
