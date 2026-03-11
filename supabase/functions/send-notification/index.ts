@@ -20,6 +20,15 @@ function normalizeFrom(raw: string | null | undefined) {
 
 const RESEND_FROM = normalizeFrom(Deno.env.get("RESEND_FROM"));
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
