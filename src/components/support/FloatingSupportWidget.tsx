@@ -188,7 +188,8 @@ const FloatingSupportWidget = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="relative w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent shadow-lg flex items-center justify-center text-white"
+           className="relative w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent shadow-lg flex items-center justify-center text-white"
+           aria-label="Open support chat"
         >
           {isOpen ? (
             <X className="w-6 h-6" />
