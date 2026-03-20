@@ -48,10 +48,9 @@ export default defineConfig(({ mode }) => ({
         scope: "/",
         start_url: "/",
         icons: [
-          { src: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
-          { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
-          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "/pwa-192x192.png", sizes: "192x192", type: "image/jpeg" },
+          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/jpeg" },
+          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/jpeg", purpose: "maskable" },
         ],
       },
     }),
