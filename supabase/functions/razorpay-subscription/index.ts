@@ -144,7 +144,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (action === "create-order") {
       const { school_id, plan, custom_amount }: CreateOrderRequest = await req.json();
-      
+
+      if (!school_id || !(await authorizeSchool(school_id))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: not authorized for this school" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       console.log(`Creating order for school ${school_id}, plan: ${plan}, custom_amount: ${custom_amount}`);
       
       let amount: number;
