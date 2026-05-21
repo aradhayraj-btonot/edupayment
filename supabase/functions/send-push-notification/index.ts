@@ -382,7 +382,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('[Push] User authenticated:', user.id);
 
-    // Check if user has admin or team role
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role, school_id')
@@ -390,7 +389,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const isTeam = roles?.some(r => r.role === 'team');
     const isAdmin = roles?.some(r => r.role === 'admin');
-    const adminSchoolId = roles?.find(r => r.role === 'admin')?.school_id;
+    const adminSchoolIds = (roles ?? [])
+      .filter(r => r.role === 'admin' && r.school_id)
+      .map(r => r.school_id as string);
 
     if (!isTeam && !isAdmin) {
       return new Response(
@@ -412,6 +413,39 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Enforce admin-school scoping
+    if (!isTeam) {
+      if (schoolId && !adminSchoolIds.includes(schoolId)) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: not authorized for this school' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (userId) {
+        // Ensure target user belongs to one of admin's schools (via student parent_id)
+        const { data: targetStudents } = await supabase
+          .from('students')
+          .select('school_id')
+          .eq('parent_id', userId);
+        const allowed = (targetStudents ?? []).some((s: any) => adminSchoolIds.includes(s.school_id));
+        if (!allowed) {
+          return new Response(
+            JSON.stringify({ error: 'Forbidden: target user not in your school' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+      if (!schoolId && !userId) {
+        // Default to first admin school to prevent broadcasting cross-school
+        if (adminSchoolIds.length === 0) {
+          return new Response(
+            JSON.stringify({ error: 'Admin has no school assignment' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     // Build query for subscriptions
     let query = supabase.from('push_subscriptions').select('*');
 
@@ -419,10 +453,11 @@ const handler = async (req: Request): Promise<Response> => {
       query = query.eq('user_id', userId);
     } else if (schoolId) {
       query = query.eq('school_id', schoolId);
-    } else if (isAdmin && adminSchoolId) {
-      query = query.eq('school_id', adminSchoolId);
+    } else if (isAdmin && adminSchoolIds.length > 0) {
+      query = query.in('school_id', adminSchoolIds);
     }
     // Team can send to all if no filter specified
+
 
     const { data: subscriptions, error: subError } = await query;
 

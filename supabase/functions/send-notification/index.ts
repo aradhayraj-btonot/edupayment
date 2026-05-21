@@ -97,18 +97,6 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Unauthorized");
     }
 
-    // Check if user is admin
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .single();
-
-    if (!roleData) {
-      throw new Error("Only admins can send notifications");
-    }
-
     const { school_id, title, message, type = "info" }: NotificationRequest = await req.json();
 
     if (!school_id || !title || !message) {
@@ -117,6 +105,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (title.length > 200 || message.length > 2000) {
       throw new Error("Input exceeds allowed length (title: 200, message: 2000)");
+    }
+
+    // Check if user is admin for THIS school (or has team role)
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, school_id")
+      .eq("user_id", user.id);
+
+    const authorized = (roles ?? []).some(
+      (r: any) => r.role === "team" || (r.role === "admin" && r.school_id === school_id)
+    );
+
+    if (!authorized) {
+      throw new Error("Forbidden: not authorized for this school");
     }
 
     // Rate limiting: max 10 notifications per school per hour
