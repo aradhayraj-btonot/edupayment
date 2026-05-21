@@ -96,39 +96,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Unauthorized");
     }
 
-    // Check if user is admin
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .single();
-
-    if (!roleData) {
-      throw new Error("Only admins can send receipts");
-    }
-
     const { payment_id }: ReceiptRequest = await req.json();
 
     if (!payment_id) {
       throw new Error("Missing required field: payment_id");
     }
-
-    // Rate limiting: max 3 receipts per payment per hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { data: recentReceipts } = await supabase
-      .from("payments")
-      .select("id, created_at")
-      .eq("id", payment_id)
-      .single();
-
-    // We use a simple approach: track via a custom header or just limit overall receipt sends per admin
-    // For simplicity, limit total receipts sent by this admin per hour
-    const { count: adminReceiptCount } = await supabase
-      .from("payments")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "completed");
-    // Note: A proper rate limit would use a separate log table. For now we accept the admin role check + UI protection.
 
     console.log(`Processing receipt for payment: ${payment_id}`);
 
@@ -167,6 +139,26 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error fetching payment:", paymentError);
       throw new Error("Payment not found");
     }
+
+    // Verify caller is admin for THIS payment's school (or team)
+    const paymentSchoolId = (payment.students as any)?.school_id;
+    if (!paymentSchoolId) {
+      throw new Error("Payment has no associated school");
+    }
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, school_id")
+      .eq("user_id", user.id);
+    const authorized = (roles ?? []).some(
+      (r: any) => r.role === "team" || (r.role === "admin" && r.school_id === paymentSchoolId)
+    );
+    if (!authorized) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: not authorized for this school" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
 
     console.log("Payment data:", JSON.stringify(payment, null, 2));
 
