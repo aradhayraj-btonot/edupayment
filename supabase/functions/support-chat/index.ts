@@ -69,13 +69,56 @@ Help users solve their problems step-by-step. Always try to resolve the issue yo
 - Use emojis sparingly for friendliness
 - Always end with "Is there anything else I can help with?"`;
 
+// In-memory IP rate limit: 30 requests per minute per IP
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 30;
+const RATE_WINDOW_MS = 60 * 1000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+
+    if (!checkRateLimit(clientIp)) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please slow down." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { messages } = await req.json();
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "messages array required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Cap conversation length and message size
+    const trimmed = messages.slice(-20).map((m: any) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: typeof m.content === "string" ? m.content.slice(0, 2000) : "",
+    }));
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -93,12 +136,13 @@ serve(async (req) => {
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
-            ...messages,
+            ...trimmed,
           ],
           stream: true,
         }),
       }
     );
+
 
     if (!response.ok) {
       if (response.status === 429) {
