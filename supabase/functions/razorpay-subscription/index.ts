@@ -205,6 +205,13 @@ const handler = async (req: Request): Promise<Response> => {
         custom_amount,
       }: VerifyPaymentRequest = await req.json();
 
+      if (!school_id || !(await authorizeSchool(school_id))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: not authorized for this school" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       console.log(`Verifying payment for school ${school_id}, custom_amount: ${custom_amount}`);
 
       // Verify signature
