@@ -62,24 +62,24 @@ const About = () => {
         <title>About EduPay | Aradhay Raj - Founder & CEO of BTONOT</title>
         <meta
           name="description"
-          content="Learn about EduPay, the school fee payment platform built by Aradhay Raj, Founder & CEO of BTONOT. Full-stack developer, AI researcher, and prompt engineer building next-generation AI companies and digital ecosystems."
+          content="Meet Aradhay Raj, Founder & CEO of BTONOT — building EduPay and next-gen AI companies including Prodlink, Nexbro AI, and NexTrust AI."
         />
         <meta
           name="keywords"
-          content="Aradhay Raj, BTONOT, Aradhay Raj BTONOT, EduPay, aradhayraj.online, school fee payment, Prodlink, Nexbro AI, NexTrust AI, AI researcher, full-stack developer, prompt engineer, tech visionary, edtech India, school fee management"
+          content="Aradhay Raj, BTONOT, EduPay, Prodlink, Nexbro AI, NexTrust AI, AI researcher, full-stack developer, edtech India"
         />
         <meta name="author" content="Aradhay Raj - BTONOT" />
-        <link rel="canonical" href="https://edupay.com/about" />
+        <link rel="canonical" href="https://edupayment.in/about" />
         
         {/* Open Graph */}
-        <meta property="og:title" content="About EduPay | Aradhay Raj - Founder & CEO of BTONOT" />
+        <meta property="og:title" content="About EduPay | Aradhay Raj — Founder of BTONOT" />
         <meta
           property="og:description"
-          content="Meet Aradhay Raj, Founder & CEO of BTONOT. Full-stack developer, AI researcher, and prompt engineer building next-generation AI companies including EduPay, Prodlink, Nexbro AI, and NexTrust AI."
+          content="Meet Aradhay Raj, Founder & CEO of BTONOT — building EduPay and next-gen AI companies including Prodlink, Nexbro AI, and NexTrust AI."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://edupay.com/about" />
-        <meta property="og:image" content="https://edupay.com/og-image.png" />
+        <meta property="og:url" content="https://edupayment.in/about" />
+        <meta property="og:image" content="https://edupayment.in/og-image.png" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />

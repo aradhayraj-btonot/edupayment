@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://edupay.com/sitemap.xml
+Sitemap: https://edupayment.in/sitemap.xml
