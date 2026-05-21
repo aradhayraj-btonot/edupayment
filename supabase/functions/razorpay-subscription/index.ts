@@ -103,7 +103,41 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Require authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Helper: verify caller is admin for the school (or team)
+    const authorizeSchool = async (school_id: string): Promise<boolean> => {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role, school_id")
+        .eq("user_id", user.id);
+      if (!roles) return false;
+      return roles.some(
+        (r: any) =>
+          r.role === "team" ||
+          (r.role === "admin" && r.school_id === school_id)
+      );
+    };
 
     const url = new URL(req.url);
     const action = url.pathname.split("/").pop();
