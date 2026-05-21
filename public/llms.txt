@@ -1,0 +1,14 @@
+# EduPay by Btonot
+
+> EduPay is a secure school fee payment platform for Indian schools and parents — pay online via UPI, cards, and net banking, with instant receipts and admin dashboards.
+
+## Pages
+
+- [Home](/): Overview of EduPay, features, and how it works.
+- [About](/about): About EduPay and the team behind it.
+- [Founder](/founder): Aradhay Raj, Founder & CEO of BTONOT.
+- [Blog](/blog): Articles on school fee management, fintech, and edtech.
+- [Install App](/apphome): Install the EduPay progressive web app.
+- [Security](/security): Security practices and compliance.
+- [Privacy Policy](/privacy): How we handle user data.
+- [Terms](/terms): Terms and conditions.
