@@ -57,6 +57,7 @@ import { TeamTicketManager } from '@/components/support/TeamTicketManager';
 import { BlogManager } from '@/components/blog/BlogManager';
 import { AssignAdminByUID } from '@/components/team/AssignAdminByUID';
 import { AssignTeamByUID } from '@/components/team/AssignTeamByUID';
+import { BugsManager } from '@/components/team/BugsManager';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -323,6 +324,7 @@ const TeamDashboard = () => {
             <TabsTrigger value="team-member">Team Member</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
+            <TabsTrigger value="bugs">Bugs</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -1259,6 +1261,10 @@ const TeamDashboard = () => {
           {/* Support Tab */}
           <TabsContent value="support">
             <TeamTicketManager />
+          </TabsContent>
+
+          <TabsContent value="bugs">
+            <BugsManager />
           </TabsContent>
         </Tabs>
       </main>
