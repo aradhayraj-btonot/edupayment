@@ -141,6 +141,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bug_reports: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          severity: string
+          status: string
+          suggested_fix: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          severity?: string
+          status?: string
+          suggested_fix?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          severity?: string
+          status?: string
+          suggested_fix?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fee_structures: {
         Row: {
           academic_year: string
