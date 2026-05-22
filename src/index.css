@@ -13,6 +13,19 @@
   display: none;
 }
 
+/* Hide all scrollbars on mobile (content still scrollable) */
+@media (max-width: 767px) {
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
 @layer base {
   :root {
     --background: 210 20% 98%;
